@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#0a1929">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <title>Checklist - App HRoman</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        html,body { height:100%; overflow-x:hidden; }
+        body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; background:linear-gradient(135deg,#0a1929 0%,#1a2980 100%); color:#fff; min-height:100vh; }
+
+        /* HEADER */
+        .header { padding:14px 15px 0; }
+        .header-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+        .header-top img { width:40px; height:40px; border-radius:8px; }
+        .header-top h1 { font-size:18px; }
+        .header-top h1 small { display:block; font-size:12px; color:#8e9aaf; font-weight:400; margin-top:2px; }
+
+        /* TABS */
+        .tabs { display:flex; background:rgba(0,0,0,0.3); border-bottom:1px solid rgba(255,255,255,0.08); margin-top:12px; }
+        .tab { flex:1; padding:13px 8px; text-align:center; font-size:13px; font-weight:600; color:#8e9aaf; cursor:pointer; border-bottom:3px solid transparent; transition:all 0.2s; }
+        .tab.active { color:#4CAF50; border-bottom-color:#4CAF50; }
+        .tab span { display:block; font-size:18px; margin-bottom:3px; }
+
+        /* PANELS */
+        .panel { display:none; padding:14px 15px 100px; }
+        .panel.active { display:block; }
+
+        /* BUSCAR ACTIVO */
+        .search-box { position:relative; margin-bottom:14px; }
+        .search-box input { width:100%; padding:12px 14px 12px 40px; border:2px solid rgba(255,255,255,0.15); border-radius:12px; background:rgba(255,255,255,0.08); color:#fff; font-size:15px; outline:none; transition:border-color 0.2s; }
+        .search-box input:focus { border-color:#4CAF50; }
+        .search-box input::placeholder { color:#8e9aaf; }
+        .search-box .si { position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:18px; pointer-events:none; }
+        .search-results { position:absolute; top:calc(100% + 4px); left:0; right:0; background:rgba(20,30,55,0.98); border:1px solid rgba(255,255,255,0.15); border-radius:12px; max-height:220px; overflow-y:auto; z-index:200; box-shadow:0 8px 24px rgba(0,0,0,0.4); }
+        .sr-item { padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.06); cursor:pointer; transition:background 0.15s; }
+        .sr-item:hover,.sr-item:active { background:rgba(76,175,80,0.15); }
+        .sr-item:last-child { border-bottom:none; }
+        .sr-item strong { display:block; font-size:14px; }
+        .sr-item small { color:#8e9aaf; font-size:12px; }
+
+        /* ACTIVO SELECCIONADO */
+        .activo-selected { background:rgba(76,175,80,0.12); border:1px solid rgba(76,175,80,0.35); border-radius:12px; padding:12px 14px; margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+        .activo-selected .as-icon { font-size:28px; }
+        .activo-selected .as-info h3 { font-size:15px; color:#4CAF50; font-weight:700; }
+        .activo-selected .as-info p { font-size:12px; color:#8e9aaf; margin-top:2px; }
+        .activo-selected .as-last { margin-left:auto; text-align:right; }
+        .activo-selected .as-last .al-pct { font-size:18px; font-weight:700; }
+        .activo-selected .as-last .al-lbl { font-size:10px; color:#8e9aaf; }
+
+        /* CHECKS */
+        .checks-card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:16px; margin-bottom:14px; }
+        .checks-card h3 { font-size:14px; font-weight:700; color:#8e9aaf; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:14px; }
+        .progress-bar-wrap { height:6px; background:rgba(255,255,255,0.1); border-radius:3px; margin-bottom:16px; overflow:hidden; }
+        .progress-bar-fill { height:100%; border-radius:3px; background:#f44336; transition:width 0.4s, background 0.4s; }
+
+        .check-item { display:flex; align-items:center; gap:12px; padding:11px 12px; background:rgba(255,255,255,0.04); border-radius:10px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.06); cursor:pointer; transition:all 0.2s; user-select:none; }
+        .check-item.checked { background:rgba(76,175,80,0.12); border-color:rgba(76,175,80,0.3); }
+        .check-item.na      { background:rgba(255,152,0,0.08);  border-color:rgba(255,152,0,0.3); }
+        .check-item .ci-toggle { width:24px; height:24px; border-radius:6px; border:2px solid rgba(255,255,255,0.25); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; transition:all 0.2s; background:rgba(255,255,255,0.05); }
+        .check-item.checked .ci-toggle { background:#4CAF50; border-color:#4CAF50; color:#fff; }
+        .check-item.na      .ci-toggle { background:#FF9800; border-color:#FF9800; color:#fff; }
+        .check-item .ci-label { flex:1; font-size:13px; color:#e0e0e0; }
+        .check-item.checked .ci-label { color:#fff; }
+        .check-item.na      .ci-label { color:#FFE0B2; }
+
+        /* FORM EXTRAS */
+        .form-group { margin-bottom:14px; }
+        .form-group label { display:block; font-size:13px; font-weight:600; color:#9fb3c8; margin-bottom:6px; }
+        .form-group input, .form-group textarea { width:100%; padding:12px 14px; border:2px solid rgba(255,255,255,0.12); border-radius:10px; background:rgba(255,255,255,0.07); color:#fff; font-size:15px; outline:none; transition:border-color 0.2s; }
+        .form-group input:focus, .form-group textarea:focus { border-color:#4CAF50; }
+        .form-group input::placeholder, .form-group textarea::placeholder { color:#8e9aaf; }
+        .form-group textarea { min-height:80px; resize:vertical; }
+
+        /* BTN */
+        .btn { width:100%; padding:14px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; transition:all 0.2s; }
+        .btn:active { opacity:0.85; transform:scale(0.98); }
+        .btn-green { background:linear-gradient(135deg,#4CAF50,#43a047); color:#fff; }
+        .btn-green:disabled { background:rgba(76,175,80,0.3); cursor:not-allowed; transform:none; }
+        .btn-outline { background:transparent; border:2px solid rgba(255,255,255,0.2); color:#fff; }
+
+        .alert { padding:12px 14px; border-radius:10px; margin-bottom:14px; font-size:14px; }
+        .alert-success { background:rgba(76,175,80,0.2); border:1px solid #4CAF50; color:#4CAF50; }
+        .alert-error   { background:rgba(244,67,54,0.2); border:1px solid #f44336; color:#f44336; }
+        .alert-info    { background:rgba(33,150,243,0.2); border:1px solid #2196F3; color:#2196F3; }
+        .alert-warning { background:rgba(255,152,0,0.2); border:1px solid #FF9800; color:#FF9800; }
+
+        .spinner { display:inline-block; width:18px; height:18px; border:3px solid rgba(255,255,255,0.3); border-radius:50%; border-top-color:#fff; animation:spin 0.8s linear infinite; vertical-align:middle; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .hidden { display:none !important; }
+
+        /* HISTORIAL */
+        .hist-filter { display:flex; gap:8px; margin-bottom:14px; }
+        .hist-filter input { flex:1; padding:10px 12px; border:1px solid rgba(255,255,255,0.15); border-radius:10px; background:rgba(255,255,255,0.07); color:#fff; font-size:13px; outline:none; }
+        .hist-filter input::placeholder { color:#8e9aaf; }
+
+        .hist-item { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px; margin-bottom:10px; }
+        .hist-item.ok  { border-left:4px solid #4CAF50; }
+        .hist-item.mid { border-left:4px solid #FF9800; }
+        .hist-item.bad { border-left:4px solid #f44336; }
+        .hist-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px; }
+        .hist-header .hh-name { font-size:15px; font-weight:700; }
+        .hist-header .hh-date { font-size:11px; color:#8e9aaf; text-align:right; }
+        .hist-pct { font-size:26px; font-weight:700; }
+        .hist-pct.pct-ok  { color:#4CAF50; }
+        .hist-pct.pct-mid { color:#FF9800; }
+        .hist-pct.pct-bad { color:#f44336; }
+        .hist-chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+        .chip { font-size:11px; padding:3px 8px; border-radius:5px; }
+        .chip.ok  { background:rgba(76,175,80,0.2);  color:#81C784; }
+        .chip.bad { background:rgba(244,67,54,0.2);  color:#E57373; }
+        .chip.na  { background:rgba(255,152,0,0.2);  color:#FFB74D; }
+        .hist-obs { font-size:12px; color:#8e9aaf; margin-top:8px; font-style:italic; }
+        .hist-med { font-size:12px; color:#90CAF9; margin-top:4px; }
+        .hist-user { font-size:11px; color:#607D8B; margin-top:4px; }
+        .hist-pending { background:#FF9800; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:6px; }
+
+        .empty { text-align:center; padding:50px 20px; color:#8e9aaf; }
+        .empty span { font-size:40px; display:block; margin-bottom:12px; }
+
+        .loading { text-align:center; padding:40px; color:#8e9aaf; }
+        .loading .sp { width:36px; height:36px; border:3px solid rgba(255,255,255,0.1); border-top-color:#4CAF50; border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 14px; }
+
+        /* BOTTOM NAV */
+        .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(10,25,41,0.97); backdrop-filter:blur(10px); display:flex; justify-content:space-around; padding:10px 0 20px; border-top:1px solid rgba(255,255,255,0.1); z-index:100; }
+        .nav-item { display:flex; flex-direction:column; align-items:center; color:#8e9aaf; font-size:10px; cursor:pointer; padding:5px 6px; }
+        .nav-item.active { color:#4CAF50; }
+        .nav-item span { font-size:20px; margin-bottom:3px; }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-top">
+            <img src="img/logo.png" alt="Logo" onerror="this.src='https://www.constructorahroman.cl/www/img/hroman.png'">
+            <h1>✅ Checklist
+                <small id="userSubtitle">Cargando...</small>
+            </h1>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('nuevo')" id="tab-nuevo">
+            <span>📋</span>Nuevo
+        </div>
+        <div class="tab" onclick="showTab('historial')" id="tab-historial">
+            <span>🕒</span>Historial
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ TAB NUEVO ═══════════════════════════════════════ -->
+    <div class="panel active" id="panel-nuevo">
+        <div id="alertNuevo"></div>
+
+        <!-- Búsqueda de activo -->
+        <div class="search-box">
+            <span class="si">🔍</span>
+            <input type="text" id="activoSearch" placeholder="Buscar activo / patente..." autocomplete="off" oninput="onSearchInput()">
+            <div id="searchResults" class="search-results hidden"></div>
+        </div>
+
+        <!-- Info activo seleccionado -->
+        <div id="activoInfo" class="activo-selected hidden">
+            <div class="as-icon">🚗</div>
+            <div class="as-info">
+                <h3 id="aName">—</h3>
+                <p id="aTipo">—</p>
+            </div>
+            <div class="as-last hidden" id="aLastWrap">
+                <div class="al-pct" id="aLastPct">—</div>
+                <div class="al-lbl">último check</div>
+            </div>
+        </div>
+
+        <!-- Formulario (visible al seleccionar activo) -->
+        <div id="checklistForm" class="hidden">
+
+            <!-- Barra de progreso -->
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+            </div>
+
+            <!-- Checks -->
+            <div class="checks-card">
+                <h3>Verificación del vehículo</h3>
+
+                <div class="check-item" onclick="toggleCheck('documentos', this)">
+                    <div class="ci-toggle" id="t-documentos"></div>
+                    <div class="ci-label">📄 Documentos al día (permiso circulación, seguro, revisión técnica)</div>
+                </div>
+                <div class="check-item" onclick="toggleCheck('neumaticos', this)">
+                    <div class="ci-toggle" id="t-neumaticos"></div>
+                    <div class="ci-label">🛞 Estado de neumáticos (presión, dibujo, desgaste)</div>
+                </div>
+                <div class="check-item" onclick="toggleCheck('luces', this)">
+                    <div class="ci-toggle" id="t-luces"></div>
+                    <div class="ci-label">💡 Sistema de luces (delanteras, traseras, direccionales)</div>
+                </div>
+                <div class="check-item" onclick="toggleCheck('frenos', this)">
+                    <div class="ci-toggle" id="t-frenos"></div>
+                    <div class="ci-label">🛑 Frenos (pastillas, líquido)</div>
+                </div>
+                <div class="check-item" onclick="toggleCheck('aceite', this)">
+                    <div class="ci-toggle" id="t-aceite"></div>
+                    <div class="ci-label">🛢️ Nivel de aceite motor</div>
+                </div>
+                <div class="check-item" onclick="toggleCheck('refrigerante', this)">
+                    <div class="ci-toggle" id="t-refrigerante"></div>
+                    <div class="ci-label">❄️ Nivel de refrigerante</div>
+                </div>
+                <div class="check-item" onclick="toggleCheck('bateria', this)">
+                    <div class="ci-toggle" id="t-bateria"></div>
+                    <div class="ci-label">🔋 Estado de batería</div>
+                </div>
+                <div class="check-item" onclick="toggleCheck('carroceria', this)">
+                    <div class="ci-toggle" id="t-carroceria"></div>
+                    <div class="ci-label">🚗 Estado general de carrocería (golpes, rayones)</div>
+                </div>
+                <div class="check-item" onclick="toggleCheck('limpieza', this)">
+                    <div class="ci-toggle" id="t-limpieza"></div>
+                    <div class="ci-label">🧹 Limpieza interior y exterior</div>
+                </div>
+                <div class="check-item" onclick="toggleCheck('herramientas', this)">
+                    <div class="ci-toggle" id="t-herramientas"></div>
+                    <div class="ci-label">🔧 Kit de herramientas y extintor completo</div>
+                </div>
+            </div>
+
+            <!-- Medición y obs -->
+            <div class="form-group">
+                <label id="medicionLabel">📏 Km / Horómetro actual *</label>
+                <input type="number" id="medicionActual" step="0.01" min="0" placeholder="Ej: 15000" inputmode="decimal">
+            </div>
+
+            <div class="form-group">
+                <label>📝 Observaciones</label>
+                <textarea id="observaciones" placeholder="Describe cualquier anomalía..."></textarea>
+            </div>
+
+            <button class="btn btn-green" id="btnGuardar" onclick="guardarChecklist()">
+                💾 Guardar Checklist
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ TAB HISTORIAL ═══════════════════════════════════════ -->
+    <div class="panel" id="panel-historial">
+        <div class="hist-filter">
+            <input type="text" id="histSearch" placeholder="🔍 Buscar por activo..." oninput="filterHistorial()">
+        </div>
+        <div id="histLoading" class="loading">
+            <div class="sp"></div>Cargando historial...
+        </div>
+        <div id="histList"></div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="goTo('index.html')"><span>⛽</span>Registro</div>
+        <div class="nav-item" onclick="goTo('registros.html')"><span>📋</span>Historial</div>
+        <div class="nav-item" onclick="goTo('resumen.html')"><span>📊</span>Resumen</div>
+        <div class="nav-item active"><span>✅</span>Checklist</div>
+        <div class="nav-item" onclick="quickSync()"><span>☁️</span>Sync</div>
+        <div class="nav-item" onclick="goTo('configuracion.html')"><span>⚙️</span>Config</div>
+        <div class="nav-item" onclick="doLogout()"><span>🚪</span>Salir</div>
+    </div>
+
+    <script>
+        const API      = 'https://www.constructorahroman.cl/crm/api';
+        const DB_NAME  = 'SurtidorDB';
+        const DB_VER   = 7;
+
+        let db = null;
+        const state = {
+            user: null,
+            activos: [],
+            checks: {
+                documentos:0, neumaticos:0, luces:0, frenos:0,
+                aceite:0, refrigerante:0, bateria:0, carroceria:0,
+                limpieza:0, herramientas:0
+            },
+            selectedActivo: null,
+            historialFull: [],
+            historialFilt: [],
+            searchTimer: null
+        };
+
+        // ─── IndexedDB ───────────────────────────────────────────────────────
+        function initDB() {
+            return new Promise((res, rej) => {
+                const req = indexedDB.open(DB_NAME, DB_VER);
+                req.onerror   = () => rej(req.error);
+                req.onsuccess = () => { db = req.result; res(db); };
+                req.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    const oldVersion = e.oldVersion;
+
+                    if (oldVersion < 6) {
+                        ['session','marcas','areas','activos','usuarios','camiones','saldos','pendingSync','registros','mediciones'].forEach(name => {
+                            if (d.objectStoreNames.contains(name)) d.deleteObjectStore(name);
+                        });
+                        d.createObjectStore('session',   { keyPath:'key' });
+                        d.createObjectStore('marcas',    { keyPath:'id' });
+                        d.createObjectStore('areas',     { keyPath:'id' });
+                        d.createObjectStore('activos',   { keyPath:'id_activo' });
+                        d.createObjectStore('usuarios',  { keyPath:'id' });
+                        d.createObjectStore('camiones',  { keyPath:'id_activo' });
+                        d.createObjectStore('saldos',    { keyPath:'id_activo' });
+                        const ps = d.createObjectStore('pendingSync', { keyPath:'id', autoIncrement:true });
+                        ps.createIndex('timestamp','timestamp');
+                        const rs = d.createObjectStore('registros',  { keyPath:'id', autoIncrement:true });
+                        rs.createIndex('timestamp','timestamp');
+                        d.createObjectStore('mediciones', { keyPath:'id_activo' });
+                    }
+
+                    if (oldVersion < 7) {
+                        if (!d.objectStoreNames.contains('checklists')) {
+                            const cs = d.createObjectStore('checklists', { keyPath:'id', autoIncrement:true });
+                            cs.createIndex('timestamp', 'timestamp');
+                            cs.createIndex('id_activo', 'id_activo');
+                        }
+                    }
+                };
+            });
+        }
+
+        const dbGetAll = (store) => new Promise(r => {
+            try {
+                const tx  = db.transaction(store,'readonly');
+                const req = tx.objectStore(store).getAll();
+                req.onsuccess = () => r(req.result || []);
+                req.onerror   = () => r([]);
+            } catch { r([]); }
+        });
+        const dbGet = (store, key) => new Promise(r => {
+            try {
+                const tx  = db.transaction(store,'readonly');
+                const req = tx.objectStore(store).get(key);
+                req.onsuccess = () => r(req.result);
+                req.onerror   = () => r(null);
+            } catch { r(null); }
+        });
+        const dbPut = (store, data) => new Promise((r, rej) => {
+            try {
+                const tx  = db.transaction(store,'readwrite');
+                const req = tx.objectStore(store).put(data);
+                req.onsuccess = () => r(req.result);
+                req.onerror   = () => rej(req.error);
+            } catch(e) { rej(e); }
+        });
+
+        // ─── API ─────────────────────────────────────────────────────────────
+        async function apiFetch(endpoint, opts = {}) {
+            const url = `${API}/${endpoint}`;
+            const cfg = { method: opts.method || 'GET' };
+            if (opts.body) {
+                cfg.headers = { 'Content-Type':'application/json' };
+                cfg.body = JSON.stringify(opts.body);
+            }
+            const r = await fetch(url, cfg);
+            return r.json();
+        }
+
+        // ─── UUID ─────────────────────────────────────────────────────────────
+        function uuid() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random()*16|0;
+                return (c==='x' ? r : (r&0x3|0x8)).toString(16);
+            });
+        }
+
+        // ─── SESIÓN ───────────────────────────────────────────────────────────
+        async function checkSession() {
+            let user = null;
+            try {
+                const s = localStorage.getItem('session');
+                if (s) { const d = JSON.parse(s); user = d.user || null; }
+            } catch {}
+            if (!user && db) {
+                const u = await dbGet('session','user');
+                if (u?.data) user = u.data;
+            }
+            if (!user) { window.location.href = 'index.html'; return; }
+            state.user = user;
+            document.getElementById('userSubtitle').textContent = `${user.nombre} ${user.apellido}`;
+        }
+
+        // ─── ACTIVOS ──────────────────────────────────────────────────────────
+        async function loadActivos() {
+            // 1. Primero desde IndexedDB (cache)
+            state.activos = await dbGetAll('activos');
+
+            // 2. Si está vacío o hay internet, refrescar desde servidor
+            if (navigator.onLine && (!state.activos.length || true)) {
+                try {
+                    const data = await apiFetch('get_all_activos.php');
+                    if (Array.isArray(data) && data.length) {
+                        state.activos = data;
+                        // Guardar en cache
+                        const tx = db.transaction('activos', 'readwrite');
+                        const store = tx.objectStore('activos');
+                        store.clear();
+                        data.forEach(a => store.put(a));
+                    }
+                } catch(e) { console.warn('activos desde cache:', e); }
+            }
+        }
+
+        // ─── BÚSQUEDA ─────────────────────────────────────────────────────────
+        function onSearchInput() {
+            clearTimeout(state.searchTimer);
+            const q = document.getElementById('activoSearch').value.trim();
+            if (q.length < 2) {
+                document.getElementById('searchResults').classList.add('hidden');
+                return;
+            }
+            state.searchTimer = setTimeout(() => doSearch(q), 250);
+        }
+
+        function doSearch(q) {
+            const ql   = q.toLowerCase();
+            const hits = state.activos
+                .filter(a => a.identificacion?.toLowerCase().includes(ql))
+                .slice(0, 20);
+
+            const box = document.getElementById('searchResults');
+            if (!hits.length) {
+                box.innerHTML = '<div class="sr-item"><small style="color:#8e9aaf">Sin resultados</small></div>';
+            } else {
+                box.innerHTML = hits.map(a => `
+                    <div class="sr-item" onclick="selectActivo(${a.id_activo})">
+                        <strong>${a.identificacion}</strong>
+                        <small>${a.tipo || ''} ${a.marca ? '· '+a.marca : ''}</small>
+                    </div>`).join('');
+            }
+            box.classList.remove('hidden');
+        }
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.search-box'))
+                document.getElementById('searchResults').classList.add('hidden');
+        });
+
+        async function selectActivo(id) {
+            const activo = state.activos.find(a => a.id_activo === id);
+            if (!activo) return;
+
+            state.selectedActivo = activo;
+            document.getElementById('activoSearch').value = activo.identificacion;
+            document.getElementById('searchResults').classList.add('hidden');
+
+            // Actualizar badge
+            document.getElementById('aName').textContent = activo.identificacion;
+            document.getElementById('aTipo').textContent = activo.tipo || 'Activo';
+            document.getElementById('activoInfo').classList.remove('hidden');
+
+            // Ajustar label medición y sugerir último valor
+            const esTipo = (activo.tipo_medicion || '').toLowerCase();
+            const tipoMedLabel = esTipo === 'horometro' ? 'Horómetro' : 'Km';
+            const lm = await dbGet('mediciones', activo.id_activo);
+            const medInput = document.getElementById('medicionActual');
+            const medLabel = document.getElementById('medicionLabel');
+            if (lm?.valor) {
+                medLabel.innerHTML = `📏 ${tipoMedLabel} actual * <small style="color:#4CAF50">(Últ: ${Number(lm.valor).toLocaleString('es-CL')})</small>`;
+                medInput.placeholder = `Mín: ${lm.valor}`;
+                medInput.min = lm.valor;
+            } else {
+                medLabel.textContent = `📏 ${tipoMedLabel} actual *`;
+                medInput.placeholder = 'Ej: 15000';
+                medInput.min = 0;
+            }
+
+            // Buscar último checklist local para este activo
+            const todos = await dbGetAll('checklists');
+            const previos = todos
+                .filter(c => c.id_activo === id)
+                .sort((a,b) => b.timestamp - a.timestamp);
+
+            if (previos.length) {
+                const p = previos[0];
+                const wrap = document.getElementById('aLastWrap');
+                wrap.classList.remove('hidden');
+                document.getElementById('aLastPct').textContent = `${p.porcentaje_aprobacion}%`;
+                document.getElementById('aLastPct').className = 'al-pct ' +
+                    (p.porcentaje_aprobacion >= 80 ? 'pct-ok' :
+                     p.porcentaje_aprobacion >= 50 ? 'pct-mid' : 'pct-bad');
+            }
+
+            // Mostrar formulario
+            resetChecks();
+            document.getElementById('checklistForm').classList.remove('hidden');
+            document.getElementById('medicionActual').value = '';
+            document.getElementById('observaciones').value = '';
+        }
+
+        // ─── CHECKS ───────────────────────────────────────────────────────────
+        const CHECK_KEYS = ['documentos','neumaticos','luces','frenos','aceite','refrigerante','bateria','carroceria','limpieza','herramientas'];
+
+        function toggleCheck(key, el) {
+            // Ciclo: 0 (vacío) → 1 (✓ OK) → -1 (✗ No aplica/Mal) → 0
+            const cur = state.checks[key];
+            const next = cur === 0 ? 1 : cur === 1 ? -1 : 0;
+            state.checks[key] = next;
+
+            el.classList.remove('checked', 'na');
+            const toggle = el.querySelector('.ci-toggle');
+            if (next === 1) {
+                el.classList.add('checked');
+                toggle.textContent = '✓';
+            } else if (next === -1) {
+                el.classList.add('na');
+                toggle.textContent = '✗';
+            } else {
+                toggle.textContent = '';
+            }
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const aprobados = CHECK_KEYS.filter(k => state.checks[k] === 1).length;
+            const excluidos = CHECK_KEYS.filter(k => state.checks[k] === -1).length;
+            const base      = CHECK_KEYS.length - excluidos;
+            const pct       = base > 0 ? Math.round((aprobados / base) * 100) : 0;
+            const bar       = document.getElementById('progressFill');
+            bar.style.width = pct + '%';
+            bar.style.background = pct >= 80 ? '#4CAF50' : pct >= 50 ? '#FF9800' : '#f44336';
+        }
+
+        function resetChecks() {
+            CHECK_KEYS.forEach(k => {
+                state.checks[k] = 0;
+                const el = document.querySelector(`[onclick="toggleCheck('${k}', this)"]`);
+                if (el) {
+                    el.classList.remove('checked', 'na');
+                    el.querySelector('.ci-toggle').textContent = '';
+                }
+            });
+            updateProgress();
+        }
+
+        // ─── GUARDAR ──────────────────────────────────────────────────────────
+        async function guardarChecklist() {
+            if (!state.selectedActivo) {
+                showAlert('alertNuevo','error','❌ Selecciona un activo primero');
+                return;
+            }
+
+            const medVal = parseFloat(document.getElementById('medicionActual').value);
+            if (!medVal || isNaN(medVal) || medVal <= 0) {
+                showAlert('alertNuevo','error','❌ Ingresa la medición (km / horómetro)');
+                return;
+            }
+
+            const aprobados  = CHECK_KEYS.filter(k => state.checks[k] === 1).length;
+            const excluidos  = CHECK_KEYS.filter(k => state.checks[k] === -1).length;
+            const base       = CHECK_KEYS.length - excluidos;
+            const porcentaje = base > 0 ? Math.round((aprobados / base) * 100) : 0;
+            const obs        = document.getElementById('observaciones').value.trim();
+            const clientId   = uuid();
+
+            const checklist = {
+                id_activo:             state.selectedActivo.id_activo,
+                activo_identificacion: state.selectedActivo.identificacion,
+                activo_tipo:           state.selectedActivo.tipo || '',
+                id_usuario:            state.user.id,
+                usuario_nombre:        `${state.user.nombre} ${state.user.apellido}`,
+                timestamp:             Date.now(),
+                fecha:                 new Date().toISOString(),
+                checks:                { ...state.checks },
+                porcentaje_aprobacion: porcentaje,
+                medicion_valor:        medVal,
+                observaciones:         obs || null,
+                client_id:             clientId,
+                synced:                false
+            };
+
+            const btn = document.getElementById('btnGuardar');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Guardando...';
+
+            try {
+                // Guardar local siempre
+                await dbPut('checklists', checklist);
+
+                // Intentar sync con servidor
+                let syncMsg = '💾 Guardado localmente';
+                if (navigator.onLine) {
+                    try {
+                        const res = await apiFetch('guardar_checklist.php', {
+                            method: 'POST',
+                            body: checklist
+                        });
+                        if (res.success) {
+                            checklist.synced = true;
+                            checklist.server_id = res.checklist_id;
+                            await dbPut('checklists', checklist);
+                            syncMsg = `✅ Guardado y sincronizado (${porcentaje}% aprobación)`;
+                        }
+                    } catch (e) {
+                        syncMsg = `💾 Guardado localmente — se sincronizará cuando haya conexión`;
+                    }
+                }
+
+                showAlert('alertNuevo', porcentaje >= 80 ? 'success' : 'warning', syncMsg);
+
+                // Resetear
+                state.selectedActivo = null;
+                document.getElementById('activoSearch').value   = '';
+                document.getElementById('activoInfo').classList.add('hidden');
+                document.getElementById('checklistForm').classList.add('hidden');
+                document.getElementById('aLastWrap').classList.add('hidden');
+                resetChecks();
+
+            } catch (e) {
+                showAlert('alertNuevo','error','❌ ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 Guardar Checklist';
+            }
+        }
+
+        // ─── HISTORIAL ────────────────────────────────────────────────────────
+        async function loadHistorial() {
+            document.getElementById('histLoading').style.display = 'block';
+            document.getElementById('histList').innerHTML = '';
+
+            let all = [];
+
+            if (navigator.onLine) {
+                // CON INTERNET: servidor es la fuente de verdad
+                try {
+                    const server = await apiFetch(`get_checklists.php?id_usuario=${state.user.id}&limit=200`);
+                    if (Array.isArray(server)) {
+                        all = [...server];
+                    }
+                } catch (e) {
+                    console.warn('Checklist historial: sin servidor', e);
+                }
+
+                // Agregar solo los que están en pendingSync (aún no enviados)
+                const pending = await dbGetAll('pendingSync');
+                const pendingChecklists = pending.filter(p => p.payload && p.payload.action === 'checklist');
+                pendingChecklists.forEach(p => {
+                    all.push({
+                        id_activo: p.payload.id_activo,
+                        activo_nombre: p.payload._activo_nombre || `Activo ${p.payload.id_activo}`,
+                        usuario_nombre: state.user ? `${state.user.nombre} ${state.user.apellido}` : '—',
+                        fecha: null,
+                        timestamp: p.timestamp,
+                        porcentaje_aprobacion: p.payload.porcentaje_aprobacion || 0,
+                        medicion_valor: p.payload.medicion_valor,
+                        observaciones: p.payload.observaciones,
+                        checks: p.payload.checks || {},
+                        _local: true
+                    });
+                });
+
+                // Limpiar cache local de checklists (ya no es necesario)
+                try {
+                    const tx = db.transaction('checklists', 'readwrite');
+                    tx.objectStore('checklists').clear();
+                } catch(e) {}
+            } else {
+                // SIN INTERNET: mostrar del cache local
+                const local = await dbGetAll('checklists');
+                all = local.map(l => ({ ...l, _local: !l.synced }));
+
+                // También agregar pendingSync
+                const pending = await dbGetAll('pendingSync');
+                const pendingChecklists = pending.filter(p => p.payload && p.payload.action === 'checklist');
+                pendingChecklists.forEach(p => {
+                    all.push({
+                        id_activo: p.payload.id_activo,
+                        activo_nombre: p.payload._activo_nombre || `Activo ${p.payload.id_activo}`,
+                        usuario_nombre: state.user ? `${state.user.nombre} ${state.user.apellido}` : '—',
+                        fecha: null,
+                        timestamp: p.timestamp,
+                        porcentaje_aprobacion: p.payload.porcentaje_aprobacion || 0,
+                        medicion_valor: p.payload.medicion_valor,
+                        observaciones: p.payload.observaciones,
+                        checks: p.payload.checks || {},
+                        _local: true
+                    });
+                });
+            }
+
+            // Ordenar más reciente primero
+            all.sort((a, b) => {
+                const da = a.fecha ? new Date(a.fecha) : new Date(a.timestamp);
+                const db2 = b.fecha ? new Date(b.fecha) : new Date(b.timestamp);
+                return db2 - da;
+            });
+
+            state.historialFull = all;
+            state.historialFilt = [...all];
+
+            document.getElementById('histLoading').style.display = 'none';
+            renderHistorial();
+        }
+
+        function filterHistorial() {
+            const q = document.getElementById('histSearch').value.trim().toLowerCase();
+            state.historialFilt = q
+                ? state.historialFull.filter(c => {
+                    const name = (c.activo_identificacion || c.activo_nombre || '').toLowerCase();
+                    return name.includes(q);
+                  })
+                : [...state.historialFull];
+            renderHistorial();
+        }
+
+        const CHECK_LABELS = {
+            documentos:'📄 Documentos', neumaticos:'🛞 Neumáticos', luces:'💡 Luces',
+            frenos:'🛑 Frenos', aceite:'🛢️ Aceite', refrigerante:'❄️ Refrigerante',
+            bateria:'🔋 Batería', carroceria:'🚗 Carrocería', limpieza:'🧹 Limpieza',
+            herramientas:'🔧 Herramientas'
+        };
+
+        function renderHistorial() {
+            const cont = document.getElementById('histList');
+            if (!state.historialFilt.length) {
+                cont.innerHTML = '<div class="empty"><span>📭</span>Sin checklists registrados aún.</div>';
+                return;
+            }
+
+            cont.innerHTML = state.historialFilt.map(c => {
+                const pct      = c.porcentaje_aprobacion || 0;
+                const cls      = pct >= 80 ? 'ok' : pct >= 50 ? 'mid' : 'bad';
+                const pctCls   = 'hist-pct pct-' + cls;
+                const nombre   = c.activo_identificacion || c.activo_nombre || `Activo ID:${c.id_activo}`;
+                const fecha    = c.fecha
+                    ? formatDate(new Date(c.fecha))
+                    : formatDate(new Date(c.timestamp));
+                const usuario  = c.usuario_nombre || '—';
+                const checks   = c.checks || {};
+                const chips    = CHECK_KEYS.map(k => {
+                    const v = checks[k] ?? checks['check_'+k];
+                    const cls = (v === 1 || v === true) ? 'ok' : (v === -1) ? 'na' : 'bad';
+                    return `<span class="chip ${cls}">${CHECK_LABELS[k]}</span>`;
+                }).join('');
+
+                return `
+                <div class="hist-item ${cls}">
+                    <div class="hist-header">
+                        <div>
+                            <div class="hh-name">🚗 ${nombre}
+                                ${c._local ? '<span class="hist-pending">⏳ local</span>' : ''}
+                            </div>
+                            <div class="hist-user">👤 ${usuario}</div>
+                        </div>
+                        <div class="hh-date">
+                            <div class="${pctCls}">${pct}%</div>
+                            <div style="font-size:10px;color:#8e9aaf;">${fecha}</div>
+                        </div>
+                    </div>
+                    <div class="hist-chips">${chips}</div>
+                    ${c.medicion_valor ? `<div class="hist-med">📏 Medición: ${Number(c.medicion_valor).toLocaleString('es-CL')}</div>` : ''}
+                    ${c.observaciones ? `<div class="hist-obs">📝 "${c.observaciones}"</div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        // ─── HELPERS ─────────────────────────────────────────────────────────
+        function formatDate(d) {
+            if (isNaN(d)) return '—';
+            return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+        }
+
+        function showAlert(id, type, msg) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+            if (type === 'success' || type === 'warning') setTimeout(() => { el.innerHTML = ''; }, 6000);
+        }
+
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            document.getElementById('panel-' + name).classList.add('active');
+            if (name === 'historial') loadHistorial();
+        }
+
+        function goTo(url) { window.location.href = url; }
+
+        async function quickSync() {
+            if (!navigator.onLine) { alert('Sin conexión a internet'); return; }
+            const btn = event.target.closest('.nav-item');
+            if (btn) btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;border-top-color:#fff;animation:spin .7s linear infinite;"></span> Sync...';
+            try {
+                const pending = await dbGetAll('pendingSync');
+                let synced = 0;
+                for (const item of pending) {
+                    try {
+                        const res = await fetch(`${API}/sync.php`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(item.payload) });
+                        const data = await res.json();
+                        if (data.success) { await dbDelete('pendingSync', item.id); synced++; }
+                    } catch(e) {}
+                }
+                await loadHistorial();
+                alert(synced > 0 ? `✅ ${synced} registro(s) sincronizado(s)` : '✅ Datos actualizados');
+            } catch(e) { alert('Error: ' + e.message); }
+            if (btn) btn.innerHTML = '<span>☁️</span>Sync';
+        }
+
+        async function doLogout() {
+            if (!confirm('¿Cerrar sesión?')) return;
+            try {
+                if (db) await new Promise((res, rej) => {
+                    const tx = db.transaction('session', 'readwrite');
+                    const req = tx.objectStore('session').clear();
+                    req.onsuccess = res; req.onerror = rej;
+                });
+            } catch(e) {}
+            try { await fetch('https://www.constructorahroman.cl/crm/api/logout.php', { method:'POST',  }); } catch(e) {}
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+
+        // ─── INIT ─────────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            try { await initDB(); } catch(e) { console.warn('DB:', e); }
+            await checkSession();
+            await loadActivos();
+        });
+    </script>
+</body>
+</html>

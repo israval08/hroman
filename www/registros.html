@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#0a1929">
+    <link rel="manifest" href="manifest.json">
+    <title>Historial - App HRoman</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: linear-gradient(135deg, #0a1929 0%, #1a2980 100%); color: #fff; min-height: 100vh; }
+        .container { max-width: 100%; margin: 0 auto; padding: 15px; padding-bottom: 100px; }
+        .header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding: 10px 0; }
+        .header img { width: 50px; height: 50px; border-radius: 10px; }
+        .header h1 { font-size: 20px; }
+        .filters { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .filters select, .filters input { width: 100%; padding: 10px 12px; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; font-size: 14px; margin-bottom: 10px; }
+        .filters select option { background: #1a2980; }
+        .btn { background: #4CAF50; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; width: 100%; font-weight: 600; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: rgba(255,255,255,0.1); border-radius: 10px; padding: 12px; text-align: center; }
+        .stat-card .value { font-size: 22px; font-weight: 700; color: #4CAF50; }
+        .stat-card .label { font-size: 11px; color: #8e9aaf; margin-top: 4px; }
+        .stat-card.descarga .value { color: #f44336; }
+        .registro-list { max-height: calc(100vh - 380px); overflow-y: auto; }
+        .registro-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+        .registro-item.carga { border-left: 4px solid #4CAF50; }
+        .registro-item.descarga { border-left: 4px solid #f44336; }
+        .registro-item.pending { border-left: 4px solid #FF9800; opacity: 0.8; }
+        .registro-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .registro-tipo { font-size: 13px; font-weight: 600; text-transform: uppercase; }
+        .registro-tipo.carga { color: #4CAF50; }
+        .registro-tipo.descarga { color: #f44336; }
+        .registro-fecha { font-size: 11px; color: #8e9aaf; }
+        .registro-cantidad { font-size: 20px; font-weight: 700; }
+        .registro-cantidad.carga { color: #4CAF50; }
+        .registro-cantidad.descarga { color: #f44336; }
+        .registro-details { font-size: 12px; color: #8e9aaf; margin-top: 8px; }
+        .registro-details p { margin: 3px 0; }
+        .pending-tag { background: #FF9800; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
+        .empty { text-align: center; padding: 40px; color: #8e9aaf; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,25,41,0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 10px 0 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #8e9aaf; font-size: 10px; cursor: pointer; padding: 5px 6px; }
+        .nav-item.active { color: #4CAF50; }
+        .nav-item span { font-size: 20px; margin-bottom: 3px; }
+        .status-offline { background: #FF9800; color: white; padding: 8px; text-align: center; font-size: 12px; margin-bottom: 15px; border-radius: 8px; }
+        .loading { text-align: center; padding: 40px; color: #8e9aaf; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="offlineStatus" class="status-offline" style="display:none;">📴 Modo offline - Mostrando datos locales</div>
+        <!-- debugBar removed -->
+        
+        <div class="header">
+            <img src="img/logo.png" alt="Logo" onerror="this.src='https://www.constructorahroman.cl/www/img/hroman.png'">
+            <div>
+                <h1>📋 Historial</h1>
+                <p style="font-size:12px;color:#8e9aaf;" id="userInfo">Cargando...</p>
+            </div>
+        </div>
+
+        <div class="filters">
+            <select id="filterTipo">
+                <option value="">Todos los movimientos</option>
+                <option value="carga">Solo cargas</option>
+                <option value="descarga">Solo descargas</option>
+            </select>
+            <select id="filterCamion">
+                <option value="">Todos los vehículos</option>
+            </select>
+            <input type="date" id="filterFecha">
+            <button class="btn" onclick="applyFilters()">🔍 Filtrar</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="value" id="totalCargas">0</div>
+                <div class="label">L Cargados</div>
+            </div>
+            <div class="stat-card descarga">
+                <div class="value" id="totalDescargas">0</div>
+                <div class="label">L Descargados</div>
+            </div>
+        </div>
+
+        <div class="registro-list" id="registroList">
+            <div class="loading">⏳ Cargando registros...</div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="goToIndex()"><span>⛽</span>Registro</div>
+        <div class="nav-item active"><span>📋</span>Historial</div>
+        <div class="nav-item" onclick="window.location.href='resumen.html'"><span>📊</span>Resumen</div>
+        <div class="nav-item" onclick="goToChecklist()"><span>✅</span>Checklist</div>
+        <div class="nav-item" onclick="quickSync()"><span>☁️</span>Sync</div>
+        <div class="nav-item" onclick="window.location.href='configuracion.html'"><span>⚙️</span>Config</div>
+        <div class="nav-item" onclick="logout()"><span>🚪</span>Salir</div>
+    </div>
+
+    <script>
+        // Captura errores globales (solo console)
+        window.onerror = function(msg, url, line, col, err) {
+            console.error('JS-ERR:', msg, 'L:', line);
+        };
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('PROMISE-ERR:', e.reason?.message || e.reason);
+        });
+
+        const API = 'https://www.constructorahroman.cl/crm/api';
+        const DB_NAME = 'SurtidorDB';
+        const DB_VERSION = 7;
+        
+        let db = null;
+        let isOnline = navigator.onLine;
+        let state = { user: null, isSurtidor: false, registros: [], camiones: [], activos: [] };
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => { db = request.result; resolve(db); };
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    const oldVersion = e.oldVersion;
+
+                    if (oldVersion < 6) {
+                        ['session','marcas','areas','activos','usuarios','camiones','saldos','pendingSync','registros','mediciones'].forEach(name => {
+                            if (database.objectStoreNames.contains(name)) database.deleteObjectStore(name);
+                        });
+                        database.createObjectStore('session',   { keyPath: 'key' });
+                        database.createObjectStore('marcas',    { keyPath: 'id' });
+                        database.createObjectStore('areas',     { keyPath: 'id' });
+                        database.createObjectStore('activos',   { keyPath: 'id_activo' });
+                        database.createObjectStore('usuarios',  { keyPath: 'id' });
+                        database.createObjectStore('camiones',  { keyPath: 'id_activo' });
+                        database.createObjectStore('saldos',    { keyPath: 'id_activo' });
+                        const ps = database.createObjectStore('pendingSync', { keyPath: 'id', autoIncrement: true });
+                        ps.createIndex('timestamp', 'timestamp');
+                        const rs = database.createObjectStore('registros', { keyPath: 'id', autoIncrement: true });
+                        rs.createIndex('timestamp', 'timestamp');
+                        database.createObjectStore('mediciones', { keyPath: 'id_activo' });
+                    }
+
+                    if (oldVersion < 7) {
+                        if (!database.objectStoreNames.contains('checklists')) {
+                            const cs = database.createObjectStore('checklists', { keyPath: 'id', autoIncrement: true });
+                            cs.createIndex('timestamp', 'timestamp');
+                            cs.createIndex('id_activo', 'id_activo');
+                        }
+                    }
+                };
+            });
+        }
+
+        const dbGetAll = (store) => new Promise((res, rej) => {
+            try {
+                const tx = db.transaction(store, 'readonly');
+                const req = tx.objectStore(store).getAll();
+                req.onsuccess = () => res(req.result || []);
+                req.onerror = () => res([]);
+            } catch (e) { res([]); }
+        });
+
+        const dbGet = (store, key) => new Promise((res, rej) => {
+            try {
+                const tx = db.transaction(store, 'readonly');
+                const req = tx.objectStore(store).get(key);
+                req.onsuccess = () => res(req.result);
+                req.onerror = () => res(null);
+            } catch (e) { res(null); }
+        });
+
+        async function api(endpoint) {
+            const res = await fetch(`${API}/${endpoint}`);
+            return res.json();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await initDB();
+            } catch (e) {
+            }
+            
+            window.addEventListener('online', () => { 
+                isOnline = true; 
+                document.getElementById('offlineStatus').style.display = 'none'; 
+                loadData(); 
+            });
+            window.addEventListener('offline', () => { 
+                isOnline = false; 
+                document.getElementById('offlineStatus').style.display = 'block'; 
+            });
+            
+            if (!isOnline) document.getElementById('offlineStatus').style.display = 'block';
+            
+            await checkSession();
+        });
+
+        async function checkSession() {
+            let user = null;
+            
+            // Buscar en localStorage (sesión permanente)
+            const saved = localStorage.getItem('session');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.user) user = data.user;
+                } catch (e) {}
+            }
+            
+            // Si no hay en localStorage, buscar en IndexedDB
+            if (!user && db) {
+                const u = await dbGet('session', 'user');
+                if (u?.data) user = u.data;
+            }
+            
+            if (!user) { 
+                window.location.href = 'index.html'; 
+                return; 
+            }
+            
+            state.user = user;
+            state.isSurtidor = (user.tipo || '').toLowerCase().trim() === 'surtidor';
+            document.getElementById('userInfo').textContent = `${user.nombre} ${user.apellido}`;
+
+            // Ocultar descargas para usuarios no-surtidor
+            if (!state.isSurtidor) {
+                const optDesc = document.querySelector('#filterTipo option[value="descarga"]');
+                if (optDesc) optDesc.remove();
+                const cardDesc = document.querySelector('.stat-card.descarga');
+                if (cardDesc) cardDesc.style.display = 'none';
+                const cardCarg = document.querySelector('.stat-card:not(.descarga)');
+                if (cardCarg) cardCarg.style.gridColumn = '1 / -1';
+            }
+
+            await loadData();
+        }
+
+        async function loadData() {
+            await loadCamiones();
+            await loadActivos();
+            await loadRegistros();
+        }
+
+        async function loadCamiones() {
+            state.camiones = await dbGetAll('camiones');
+            
+            if (isOnline) {
+                try {
+                    const data = await api('get_camion_saldo.php');
+                    if (data.camiones) {
+                        state.camiones = data.camiones;
+                    }
+                } catch (e) {}
+            }
+            
+            const select = document.getElementById('filterCamion');
+            select.innerHTML = `<option value="">${state.isSurtidor ? 'Todos los camiones' : 'Todos los vehículos'}</option>`;
+            state.camiones.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id_activo;
+                opt.textContent = c.identificacion;
+                select.appendChild(opt);
+            });
+        }
+
+        async function loadActivos() {
+            state.activos = await dbGetAll('activos');
+        }
+
+        function cacheRegistros(records) {
+            if (!db || !records.length) return;
+            try {
+                const tx    = db.transaction('registros', 'readwrite');
+                const store = tx.objectStore('registros');
+                store.clear();
+                records.forEach(r => store.put({ ...r, id: r.id_registro || r.id }));
+            } catch(e) {}
+        }
+
+        async function loadRegistros() {
+            // Debug via console only
+            const dbg = (msg) => { console.log('[registros]', msg); };
+
+            // 1. Locales guardados (cache offline)
+            const localRegistros = await dbGetAll('registros');
+
+            // 2. Pendientes aún no sincronizados
+            const pendingSync = await dbGetAll('pendingSync');
+            const pendingAsRegistros = pendingSync.map(p => ({
+                ...p.payload,
+                timestamp: p.timestamp,
+                pending: true,
+                id: `pending-${p.id}`
+            }));
+
+            let allRegistros = [...localRegistros, ...pendingAsRegistros];
+            dbg(`local:${localRegistros.length} pend:${pendingAsRegistros.length} online:${isOnline} user:${state.user?.id}`);
+
+            // 3. Si hay internet: servidor es fuente de verdad + pendientes locales
+            if (isOnline) {
+                try {
+                    const url = `get_registros.php?id_usuario=${state.user.id}&limit=200`;
+                    dbg(`fetch:${url}`);
+                    const serverData = await api(url);
+                    dbg(`resp:${typeof serverData} isArr:${Array.isArray(serverData)} len:${Array.isArray(serverData) ? serverData.length : 'N/A'}`);
+                    if (!Array.isArray(serverData)) {
+                        dbg(`body:${JSON.stringify(serverData).substring(0,200)}`);
+                    }
+                    if (Array.isArray(serverData) && serverData.length) {
+                        allRegistros = [...serverData, ...pendingAsRegistros];
+                        // Guardar en cache local para uso offline
+                        cacheRegistros(serverData);
+                    }
+                } catch (e) {
+                    dbg(`ERR:${e.message}`);
+                }
+            }
+            
+            // 4. Filtrar solo cargas para usuarios no-surtidor
+            if (!state.isSurtidor) {
+                allRegistros = allRegistros.filter(r => r.tipo_movimiento === 'carga');
+            }
+
+            // 5. Ordenar por fecha (más reciente primero)
+            state.registros = allRegistros.sort((a, b) => {
+                const dateA = a.fecha_hora ? new Date(a.fecha_hora) : new Date(a.timestamp);
+                const dateB = b.fecha_hora ? new Date(b.fecha_hora) : new Date(b.timestamp);
+                return dateB - dateA;
+            });
+            
+            renderRegistros(state.registros);
+            updateStats(state.registros);
+        }
+
+        function applyFilters() {
+            const tipo = document.getElementById('filterTipo').value;
+            const camion = document.getElementById('filterCamion').value;
+            const fecha = document.getElementById('filterFecha').value;
+            
+            let filtered = [...state.registros];
+            
+            if (tipo) filtered = filtered.filter(r => r.tipo_movimiento === tipo);
+            if (camion) filtered = filtered.filter(r => r.id_activo == camion);
+            if (fecha) {
+                filtered = filtered.filter(r => {
+                    const d = r.fecha_hora ? r.fecha_hora.split(' ')[0] : new Date(r.timestamp).toISOString().split('T')[0];
+                    return d === fecha;
+                });
+            }
+            
+            renderRegistros(filtered);
+            updateStats(filtered);
+        }
+
+        function renderRegistros(registros) {
+            const container = document.getElementById('registroList');
+            
+            if (!registros?.length) {
+                container.innerHTML = '<div class="empty">📭 Sin registros<br><small style="color:#666;">Los registros aparecerán aquí después de hacer cargas o descargas</small></div>';
+                return;
+            }
+            
+            container.innerHTML = registros.map(r => {
+                const fecha = r.fecha_hora ? formatDate(r.fecha_hora) : formatDate(new Date(r.timestamp));
+                
+                // Nombre del camión surtidor
+                const camionName = r.camion_identificacion || (state.camiones.find(c => c.id_activo == r.id_activo)?.identificacion) || `Camión ID: ${r.id_activo}`;
+                
+                let detallesExtra = '';
+                
+                if (r.tipo_movimiento === 'descarga') {
+                    // Para descargas: mostrar operador y vehículo destino
+                    const operadorNombre = r.operador_nombre?.trim() || r._usuario_nombre?.trim();
+                    if (operadorNombre) {
+                        detallesExtra += `<p>👤 Chofer: <strong>${operadorNombre}</strong>${r.operador_rut ? ` (${r.operador_rut})` : ''}</p>`;
+                    }
+                    const destinoNombre = r.destino_identificacion
+                        || r._activo_nombre
+                        || state.activos.find(a => a.id_activo == r.id_activo_destino)?.identificacion;
+                    if (destinoNombre) {
+                        detallesExtra += `<p>🚗 Activo: <strong>${destinoNombre}</strong>${r.destino_tipo ? ` (${r.destino_tipo})` : ''}</p>`;
+                    }
+                    if (r.medicion_valor) {
+                        detallesExtra += `<p>📏 Medición: ${Number(r.medicion_valor).toLocaleString('es-CL')}</p>`;
+                    }
+                } else {
+                    // Para cargas directas: mostrar patente del vehículo cargado
+                    if (r.es_carga_directa == 1) {
+                        const vehiculoNombre = r.destino_identificacion
+                            || r._activo_nombre
+                            || state.activos.find(a => a.id_activo == (r.id_activos || r.id_activo_destino))?.identificacion;
+                        if (vehiculoNombre) {
+                            detallesExtra += `<p>🚗 Vehículo: <strong>${vehiculoNombre}</strong></p>`;
+                        }
+                    }
+                    // Estación / proveedor
+                    if (r.estacion_nombre) {
+                        const ubic = r.estacion_ubicacion ? ` — ${r.estacion_ubicacion}` : '';
+                        detallesExtra += `<p>⛽ Estación: <strong>${r.estacion_nombre}${ubic}</strong></p>`;
+                    }
+                    if (r.medicion_valor) {
+                        detallesExtra += `<p>📏 Medición: ${Number(r.medicion_valor).toLocaleString('es-CL')}</p>`;
+                    }
+                }
+                
+                return `
+                    <div class="registro-item ${r.tipo_movimiento} ${r.pending ? 'pending' : ''}">
+                        <div class="registro-header">
+                            <div>
+                                <span class="registro-tipo ${r.tipo_movimiento}">
+                                    ${r.tipo_movimiento === 'carga' ? '⬆️' : '⬇️'} ${r.tipo_movimiento}
+                                </span>
+                                ${r.pending ? '<span class="pending-tag">⏳ Pendiente</span>' : ''}
+                            </div>
+                            <span class="registro-fecha">${fecha}</span>
+                        </div>
+                        <div class="registro-cantidad ${r.tipo_movimiento}">
+                            ${r.tipo_movimiento === 'carga' ? '+' : '-'}${Number(r.cantidad).toLocaleString('es-CL')} L
+                        </div>
+                        <div class="registro-details">
+                            <p>🚛 ${camionName}</p>
+                            ${r.tipo_combustible ? `<p>${labelCombustible(r.tipo_combustible)}</p>` : ''}
+                            ${detallesExtra}
+                            ${r.numero_boleta ? `<p>🧾 Boleta: ${r.numero_boleta}</p>` : ''}
+                            ${r.observaciones ? `<p>📝 ${r.observaciones}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats(registros) {
+            const cargas = registros.filter(r => r.tipo_movimiento === 'carga').reduce((s, r) => s + parseFloat(r.cantidad || 0), 0);
+            const descargas = registros.filter(r => r.tipo_movimiento === 'descarga').reduce((s, r) => s + parseFloat(r.cantidad || 0), 0);
+            document.getElementById('totalCargas').textContent = cargas.toLocaleString('es-CL');
+            document.getElementById('totalDescargas').textContent = descargas.toLocaleString('es-CL');
+        }
+
+        function labelCombustible(tipo) {
+            const map = {
+                petroleo:    '🛢️ Petróleo/Diesel',
+                gasolina:    '⛽ Gasolina',
+                gasolina_93: '⛽ Gasolina 93',
+                gasolina_95: '⛽ Gasolina 95',
+                gasolina_97: '⛽ Gasolina 97',
+                otro:        '🔧 Otro'
+            };
+            return map[tipo] || tipo || '';
+        }
+
+        function formatDate(d) {
+            const date = typeof d === 'string' ? new Date(d) : d;
+            if (isNaN(date.getTime())) return 'Fecha inválida';
+            return `${date.getDate().toString().padStart(2,'0')}/${(date.getMonth()+1).toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+        }
+
+        function goToIndex() { window.location.href = 'index.html'; }
+
+        function goToChecklist() { window.location.href = 'checklist.html'; }
+
+        async function quickSync() {
+            if (!navigator.onLine) { alert('Sin conexión a internet'); return; }
+            const btn = document.querySelector('.nav-item [onclick*="quickSync"]') || event.target.closest('.nav-item');
+            if (btn) btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;border-top-color:#fff;animation:spin .7s linear infinite;display:inline-block;"></span> Sync...';
+            try {
+                // Enviar pendientes
+                const pending = await dbGetAll('pendingSync');
+                let synced = 0;
+                for (const item of pending) {
+                    try {
+                        const res = await fetch(`${API}/sync.php`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(item.payload) });
+                        const data = await res.json();
+                        if (data.success) { await dbDelete('pendingSync', item.id); synced++; }
+                    } catch(e) {}
+                }
+                // Recargar datos del servidor
+                await loadRegistros();
+                alert(synced > 0 ? `✅ ${synced} registro(s) sincronizado(s)` : '✅ Datos actualizados');
+            } catch(e) { alert('Error: ' + e.message); }
+            if (btn) btn.innerHTML = '<span>☁️</span>Sync';
+        }
+
+        async function logout() {
+            if (!confirm('¿Cerrar sesión?')) return;
+            try {
+                if (db) await new Promise((res, rej) => {
+                    const tx = db.transaction('session', 'readwrite');
+                    const req = tx.objectStore('session').clear();
+                    req.onsuccess = res; req.onerror = rej;
+                });
+            } catch(e) {}
+            try { await fetch('https://www.constructorahroman.cl/crm/api/logout.php', { method:'POST',  }); } catch(e) {}
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

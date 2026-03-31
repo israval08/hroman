@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#0a1929">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <title>Configuración - App HRoman</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+               background:linear-gradient(135deg,#0a1929 0%,#1a2980 100%); color:#fff; min-height:100vh; }
+
+        /* HEADER */
+        .header { padding:16px 15px 0; margin-bottom:4px; }
+        .header-top { display:flex; align-items:center; gap:12px; }
+        .header-top img { width:40px; height:40px; border-radius:8px; }
+        .header-top h1 { font-size:20px; font-weight:700; }
+        .header-top h1 small { display:block; font-size:12px; color:#8e9aaf; font-weight:400; margin-top:2px; }
+
+        /* CONTENT */
+        .content { padding:16px 15px 110px; }
+
+        /* CARDS */
+        .section { margin-bottom:18px; }
+        .section-title { font-size:11px; font-weight:700; color:#607D8B; text-transform:uppercase;
+                         letter-spacing:0.8px; margin-bottom:8px; padding-left:2px; }
+        .card { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.09);
+                border-radius:14px; overflow:hidden; }
+        .card-row { display:flex; align-items:center; padding:14px 16px;
+                    border-bottom:1px solid rgba(255,255,255,0.06); gap:14px; }
+        .card-row:last-child { border-bottom:none; }
+        .row-icon { font-size:22px; flex-shrink:0; }
+        .row-body { flex:1; }
+        .row-body .rb-label { font-size:14px; font-weight:600; }
+        .row-body .rb-desc  { font-size:12px; color:#8e9aaf; margin-top:3px; }
+        .row-right { flex-shrink:0; }
+
+        /* USER CARD */
+        .user-card { background:rgba(76,175,80,0.1); border:1px solid rgba(76,175,80,0.3);
+                     border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+        .user-avatar { width:48px; height:48px; border-radius:50%; background:rgba(76,175,80,0.25);
+                       border:2px solid rgba(76,175,80,0.5); display:flex; align-items:center;
+                       justify-content:center; font-size:22px; flex-shrink:0; }
+        .user-info h2 { font-size:16px; font-weight:700; color:#fff; }
+        .user-info p  { font-size:12px; color:#8e9aaf; margin-top:3px; }
+        .user-badge { display:inline-block; background:rgba(76,175,80,0.25); color:#81C784;
+                      font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px;
+                      text-transform:uppercase; margin-top:5px; }
+
+        /* CAMION BADGE */
+        .camion-mini { background:rgba(33,150,243,0.1); border:1px solid rgba(33,150,243,0.3);
+                       border-radius:10px; padding:10px 14px; display:flex; align-items:center;
+                       gap:10px; margin-top:8px; }
+        .camion-mini .cm-icon { font-size:20px; }
+        .camion-mini .cm-info { flex:1; }
+        .camion-mini .cm-info strong { font-size:14px; color:#64B5F6; }
+        .camion-mini .cm-info span   { display:block; font-size:11px; color:#8e9aaf; }
+        .camion-mini .cm-saldo { font-size:15px; font-weight:700; color:#4CAF50; }
+
+        /* TOGGLE SWITCH */
+        .toggle-wrap { display:flex; align-items:center; gap:0; background:rgba(0,0,0,0.25);
+                       border-radius:10px; overflow:hidden; }
+        .toggle-opt  { flex:1; padding:9px 6px; text-align:center; font-size:12px; font-weight:600;
+                       cursor:pointer; color:#8e9aaf; transition:all 0.25s; }
+        .toggle-opt.active { background:rgba(76,175,80,0.3); color:#81C784; }
+        .toggle-opt:first-child { border-radius:9px 0 0 9px; }
+        .toggle-opt:last-child  { border-radius:0 9px 9px 0; }
+
+        /* SYNC STATUS */
+        .sync-status { display:flex; align-items:center; gap:8px; padding:10px 14px;
+                       border-radius:10px; font-size:13px; margin-top:10px; }
+        .sync-status.ok      { background:rgba(76,175,80,0.1);  border:1px solid rgba(76,175,80,0.25); color:#81C784; }
+        .sync-status.pending { background:rgba(255,152,0,0.1);  border:1px solid rgba(255,152,0,0.25); color:#FFB74D; }
+        .sync-status.error   { background:rgba(244,67,54,0.1);  border:1px solid rgba(244,67,54,0.25); color:#EF9A9A; }
+        .sync-status-icon { font-size:18px; }
+        .sync-status-text .st-main { font-weight:700; }
+        .sync-status-text .st-sub  { font-size:11px; color:#8e9aaf; margin-top:2px; }
+
+        /* BTN */
+        .btn { width:100%; padding:14px; border:none; border-radius:12px; font-size:15px;
+               font-weight:700; cursor:pointer; transition:all 0.2s; margin-top:10px; }
+        .btn:active { opacity:0.85; transform:scale(0.98); }
+        .btn-sync   { background:linear-gradient(135deg,#1565C0,#1976D2); color:#fff; }
+        .btn-sync:disabled { background:rgba(25,118,210,0.3); cursor:not-allowed; transform:none; }
+        .btn-danger { background:rgba(244,67,54,0.15); color:#EF9A9A;
+                      border:1px solid rgba(244,67,54,0.4); }
+        .btn-danger:hover { background:rgba(244,67,54,0.25); }
+
+        .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3);
+                   border-radius:50%; border-top-color:#fff; animation:spin 0.7s linear infinite;
+                   vertical-align:middle; margin-right:6px; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        .hidden { display:none !important; }
+
+        /* VERSION */
+        .version-text { text-align:center; font-size:10px; color:rgba(255,255,255,0.25);
+                        padding:18px 10px 0; letter-spacing:0.3px; }
+
+        /* BOTTOM NAV */
+        .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(10,25,41,0.97);
+                      backdrop-filter:blur(10px); display:flex; justify-content:space-around;
+                      padding:10px 0 20px; border-top:1px solid rgba(255,255,255,0.1); z-index:100; }
+        .nav-item { display:flex; flex-direction:column; align-items:center; color:#8e9aaf;
+                    font-size:10px; cursor:pointer; padding:5px 6px; }
+        .nav-item.active { color:#4CAF50; }
+        .nav-item span { font-size:20px; margin-bottom:3px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-top">
+            <img src="img/logo.png" alt="Logo" onerror="this.src='https://www.constructorahroman.cl/www/img/hroman.png'">
+            <h1>⚙️ Configuración
+                <small>App HRoman v2.2.0</small>
+            </h1>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- USUARIO -->
+        <div class="user-card" id="userCard">
+            <div class="user-avatar">👤</div>
+            <div class="user-info">
+                <h2 id="cfgUserName">Cargando...</h2>
+                <p  id="cfgUserRut">—</p>
+                <span class="user-badge" id="cfgUserRol">—</span>
+                <div class="camion-mini hidden" id="camionMini">
+                    <span class="cm-icon">🚛</span>
+                    <div class="cm-info">
+                        <strong id="cmNombre">—</strong>
+                        <span id="cmTipo">—</span>
+                    </div>
+                    <span class="cm-saldo" id="cmSaldo">—</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SINCRONIZACIÓN -->
+        <div class="section">
+            <div class="section-title">🔄 Sincronización</div>
+            <div class="card">
+                <div class="card-row">
+                    <span class="row-icon">⚡</span>
+                    <div class="row-body">
+                        <div class="rb-label">Modo de sincronización</div>
+                        <div class="rb-desc" id="syncModeDesc">Selecciona cómo se envían los registros al servidor</div>
+                    </div>
+                </div>
+                <div class="card-row" style="padding-top:6px;padding-bottom:14px;">
+                    <div style="width:100%;">
+                        <div class="toggle-wrap">
+                            <div class="toggle-opt" id="optManual" onclick="setSyncMode('manual')">
+                                🖐 Manual<br><small style="font-weight:400;font-size:10px;">Presionar Sync</small>
+                            </div>
+                            <div class="toggle-opt" id="optAuto" onclick="setSyncMode('auto')">
+                                ⚡ Automático<br><small style="font-weight:400;font-size:10px;">Al guardar</small>
+                            </div>
+                        </div>
+                        <div id="syncStatusBox"></div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-sync" id="btnSyncNow" onclick="syncAhora()">
+                ☁️ Sincronizar / Actualizar Datos
+            </button>
+        </div>
+
+        <!-- DATOS LOCALES -->
+        <div class="section">
+            <div class="section-title">📦 Datos locales</div>
+            <div class="card" id="statsCard">
+                <div class="card-row">
+                    <span class="row-icon">⏳</span>
+                    <div class="row-body">
+                        <div class="rb-label">Pendientes de sync</div>
+                        <div class="rb-desc" id="statPending">Calculando...</div>
+                    </div>
+                </div>
+                <div class="card-row">
+                    <span class="row-icon">✅</span>
+                    <div class="row-body">
+                        <div class="rb-label">Registros guardados</div>
+                        <div class="rb-desc" id="statRegistros">Calculando...</div>
+                    </div>
+                </div>
+                <div class="card-row">
+                    <span class="row-icon">🚗</span>
+                    <div class="row-body">
+                        <div class="rb-label">Activos en caché</div>
+                        <div class="rb-desc" id="statActivos">Calculando...</div>
+                    </div>
+                </div>
+                <div class="card-row">
+                    <span class="row-icon">✅</span>
+                    <div class="row-body">
+                        <div class="rb-label">Checklists locales</div>
+                        <div class="rb-desc" id="statChecklists">Calculando...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACERCA DE -->
+        <div class="section">
+            <div class="section-title">ℹ️ Acerca de</div>
+            <div class="card">
+                <div class="card-row">
+                    <span class="row-icon">📱</span>
+                    <div class="row-body">
+                        <div class="rb-label">Versión</div>
+                        <div class="rb-desc">v2.2.0 — Señal inteligente y auto-actualización</div>
+                    </div>
+                </div>
+                <div class="card-row">
+                    <span class="row-icon">🏗️</span>
+                    <div class="row-body">
+                        <div class="rb-label">Constructora H Roman</div>
+                        <div class="rb-desc">Sistema de Gestión de Combustible</div>
+                    </div>
+                </div>
+                <div class="card-row">
+                    <span class="row-icon">👨‍💻</span>
+                    <div class="row-body">
+                        <div class="rb-label">Desarrollada por</div>
+                        <div class="rb-desc">Israel Valenzuela Lavín</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SESIÓN -->
+        <div class="section">
+            <div class="section-title">🔐 Sesión</div>
+            <button class="btn btn-danger" onclick="doLogout()">🚪 Cerrar Sesión</button>
+        </div>
+
+        <div class="version-text">App HRoman v2.2.0 · © Constructora H Roman</div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="goTo('index.html')"><span>⛽</span>Registro</div>
+        <div class="nav-item" onclick="goTo('registros.html')"><span>📋</span>Historial</div>
+        <div class="nav-item" onclick="goTo('resumen.html')"><span>📊</span>Resumen</div>
+        <div class="nav-item" onclick="goTo('checklist.html')"><span>✅</span>Checklist</div>
+        <div class="nav-item" onclick="syncAhora()"><span>☁️</span>Sync</div>
+        <div class="nav-item active"><span>⚙️</span>Config</div>
+        <div class="nav-item" onclick="doLogout()"><span>🚪</span>Salir</div>
+    </div>
+
+    <script>
+        const API     = 'https://www.constructorahroman.cl/crm/api';
+        const DB_NAME = 'SurtidorDB';
+        const DB_VER  = 7;
+
+        let db = null;
+
+        // ─── IndexedDB ────────────────────────────────────────────────
+        function initDB() {
+            return new Promise((res, rej) => {
+                const req = indexedDB.open(DB_NAME, DB_VER);
+                req.onerror   = () => rej(req.error);
+                req.onsuccess = () => { db = req.result; res(db); };
+                req.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    const oldVersion = e.oldVersion;
+                    if (oldVersion < 6) {
+                        ['session','marcas','areas','activos','usuarios','camiones','saldos','pendingSync','registros','mediciones'].forEach(n => {
+                            if (d.objectStoreNames.contains(n)) d.deleteObjectStore(n);
+                        });
+                        d.createObjectStore('session',   { keyPath:'key' });
+                        d.createObjectStore('marcas',    { keyPath:'id' });
+                        d.createObjectStore('areas',     { keyPath:'id' });
+                        d.createObjectStore('activos',   { keyPath:'id_activo' });
+                        d.createObjectStore('usuarios',  { keyPath:'id' });
+                        d.createObjectStore('camiones',  { keyPath:'id_activo' });
+                        d.createObjectStore('saldos',    { keyPath:'id_activo' });
+                        const ps = d.createObjectStore('pendingSync', { keyPath:'id', autoIncrement:true });
+                        ps.createIndex('timestamp','timestamp');
+                        const rs = d.createObjectStore('registros',  { keyPath:'id', autoIncrement:true });
+                        rs.createIndex('timestamp','timestamp');
+                        d.createObjectStore('mediciones', { keyPath:'id_activo' });
+                    }
+                    if (oldVersion < 7) {
+                        if (!d.objectStoreNames.contains('checklists')) {
+                            const cs = d.createObjectStore('checklists', { keyPath:'id', autoIncrement:true });
+                            cs.createIndex('timestamp','timestamp');
+                            cs.createIndex('id_activo','id_activo');
+                        }
+                    }
+                };
+            });
+        }
+
+        const dbGetAll = (store) => new Promise(r => {
+            try {
+                const tx  = db.transaction(store,'readonly');
+                const req = tx.objectStore(store).getAll();
+                req.onsuccess = () => r(req.result || []);
+                req.onerror   = () => r([]);
+            } catch { r([]); }
+        });
+        const dbGet = (store, key) => new Promise(r => {
+            try {
+                const tx  = db.transaction(store,'readonly');
+                const req = tx.objectStore(store).get(key);
+                req.onsuccess = () => r(req.result);
+                req.onerror   = () => r(null);
+            } catch { r(null); }
+        });
+        const dbCount = (store) => new Promise(r => {
+            try {
+                const tx  = db.transaction(store,'readonly');
+                const req = tx.objectStore(store).count();
+                req.onsuccess = () => r(req.result || 0);
+                req.onerror   = () => r(0);
+            } catch { r(0); }
+        });
+
+        // ─── SESIÓN ───────────────────────────────────────────────────
+        async function loadSession() {
+            let user = null, camion = null;
+            try {
+                const s = localStorage.getItem('session');
+                if (s) { const d = JSON.parse(s); user = d.user || null; }
+            } catch {}
+            if (!user && db) {
+                const u = await dbGet('session','user');
+                if (u?.data) user = u.data;
+            }
+            try {
+                const sc = localStorage.getItem('selected_camion');
+                if (sc) camion = JSON.parse(sc);
+            } catch {}
+            if (!camion && db) {
+                const c = await dbGet('session','camion');
+                if (c?.data) camion = c.data;
+            }
+            if (!user) { window.location.href = 'index.html'; return; }
+
+            document.getElementById('cfgUserName').textContent = `${user.nombre} ${user.apellido}`;
+            document.getElementById('cfgUserRut').textContent  = user.rut || '—';
+            document.getElementById('cfgUserRol').textContent  = (user.tipo || '—').toUpperCase();
+
+            const isSurtidor = (user.tipo || '').toLowerCase().trim() === 'surtidor';
+            if (isSurtidor && camion) {
+                document.getElementById('camionMini').classList.remove('hidden');
+                document.getElementById('cmNombre').textContent = camion.identificacion || '—';
+                document.getElementById('cmTipo').textContent   = camion.tipo || 'Camión Surtidor';
+                const saldo = parseFloat(camion.saldo_actual || 0);
+                document.getElementById('cmSaldo').textContent  = saldo.toLocaleString('es-CL') + ' L';
+            } else {
+                document.getElementById('camionMini').classList.add('hidden');
+            }
+        }
+
+        // ─── SYNC MODE ────────────────────────────────────────────────
+        function getSyncMode() {
+            return localStorage.getItem('syncMode') || 'auto';
+        }
+
+        function setSyncMode(mode) {
+            localStorage.setItem('syncMode', mode);
+            renderSyncMode();
+        }
+
+        function renderSyncMode() {
+            const mode = getSyncMode();
+            document.getElementById('optManual').classList.toggle('active', mode === 'manual');
+            document.getElementById('optAuto').classList.toggle('active',   mode === 'auto');
+
+            const descEl = document.getElementById('syncModeDesc');
+            const boxEl  = document.getElementById('syncStatusBox');
+
+            if (mode === 'auto') {
+                descEl.textContent = '⚡ Los registros se envían al servidor automáticamente al guardar.';
+                boxEl.innerHTML = `
+                    <div class="sync-status ok" style="margin-top:10px;">
+                        <span class="sync-status-icon">⚡</span>
+                        <div class="sync-status-text">
+                            <div class="st-main">Auto-sync activado</div>
+                            <div class="st-sub">Requiere conexión a internet al momento de guardar</div>
+                        </div>
+                    </div>`;
+            } else {
+                descEl.textContent = '🖐 Los registros se guardan localmente. Tú decides cuándo sincronizar.';
+                boxEl.innerHTML = `
+                    <div class="sync-status pending" style="margin-top:10px;">
+                        <span class="sync-status-icon">🖐</span>
+                        <div class="sync-status-text">
+                            <div class="st-main">Sync manual activo</div>
+                            <div class="st-sub">Usa el botón "Sincronizar Ahora" cuando quieras enviar datos</div>
+                        </div>
+                    </div>`;
+            }
+        }
+
+        // ─── STATS ────────────────────────────────────────────────────
+        async function loadStats() {
+            const pending    = await dbCount('pendingSync');
+            const registros  = await dbCount('registros');
+            const activos    = await dbCount('activos');
+            const checklists = await dbCount('checklists');
+
+            const pEl = document.getElementById('statPending');
+            pEl.textContent = pending > 0
+                ? `${pending} registro${pending > 1 ? 's' : ''} por enviar`
+                : 'Todo sincronizado ✅';
+            pEl.style.color = pending > 0 ? '#FFB74D' : '#81C784';
+
+            document.getElementById('statRegistros').textContent =
+                `${registros} registro${registros !== 1 ? 's' : ''} en caché local`;
+            document.getElementById('statActivos').textContent =
+                `${activos} activo${activos !== 1 ? 's' : ''} disponibles offline`;
+            document.getElementById('statChecklists').textContent =
+                `${checklists} checklist${checklists !== 1 ? 's' : ''} guardados`;
+
+            // Actualizar botón Sync
+            const btn = document.getElementById('btnSyncNow');
+            if (pending > 0) {
+                btn.textContent = `☁️ Sincronizar Ahora (${pending} pendiente${pending > 1 ? 's' : ''})`;
+                btn.style.background = '';
+            } else {
+                btn.textContent = '☁️ Sincronizar / Actualizar Datos';
+            }
+        }
+
+        // ─── SYNC ─────────────────────────────────────────────────────
+        async function syncAhora() {
+            if (!navigator.onLine) {
+                alert('❌ Sin conexión a internet. Conecta e intenta de nuevo.');
+                return;
+            }
+            const btn = document.getElementById('btnSyncNow');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Sincronizando...';
+
+            try {
+                // Enviar pendientes
+                const pending = await dbGetAll('pendingSync');
+                let synced = 0, failed = 0;
+
+                for (const item of pending) {
+                    try {
+                        const res = await fetch(`${API}/sync.php`, {
+                            method: 'POST',
+                            headers: { 'Content-Type':'application/json' },
+                            
+                            body: JSON.stringify(item.payload)
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            // Borrar del pendingSync
+                            await new Promise((r, rej) => {
+                                const tx  = db.transaction('pendingSync','readwrite');
+                                const req = tx.objectStore('pendingSync').delete(item.id);
+                                req.onsuccess = r; req.onerror = rej;
+                            });
+                            synced++;
+                        } else { failed++; }
+                    } catch { failed++; }
+                }
+
+                const msg = synced > 0
+                    ? `✅ ${synced} registro${synced > 1 ? 's' : ''} sincronizado${synced > 1 ? 's' : ''}${failed > 0 ? ` · ${failed} fallaron` : ''}`
+                    : (pending.length === 0 ? '✅ Sin pendientes — datos al día' : `❌ ${failed} registros fallaron`);
+                btn.textContent = msg;
+                setTimeout(() => { btn.disabled = false; loadStats(); }, 2500);
+
+            } catch (e) {
+                btn.textContent = '❌ Error al sincronizar';
+                btn.disabled = false;
+            }
+        }
+
+        // ─── HELPERS ─────────────────────────────────────────────────
+        function goTo(url) { window.location.href = url; }
+
+        async function doLogout() {
+            if (!confirm('¿Cerrar sesión?')) return;
+            try {
+                if (db) await new Promise((res, rej) => {
+                    const tx = db.transaction('session', 'readwrite');
+                    const req = tx.objectStore('session').clear();
+                    req.onsuccess = res; req.onerror = rej;
+                });
+            } catch(e) {}
+            try { await fetch(`${API}/logout.php`, { method:'POST',  }); } catch(e) {}
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+
+        // ─── INIT ─────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            try { await initDB(); } catch(e) { console.warn('DB:', e); }
+            await loadSession();
+            renderSyncMode();
+            await loadStats();
+        });
+    </script>
+</body>
+</html>

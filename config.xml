@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="cl.hroman.surtidor" version="2.2.0" xmlns="http://www.w3.org/ns/widgets" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>App HRoman</name>
+    <description>Sistema de Gestión de Combustible - Constructora H Roman</description>
+    <author email="dev@hroman.cl" href="https://constructorahroman.cl">H Roman</author>
+    <content src="index.html" />
+    <icon src="resources/icon.png" />
+    <splash src="resources/splash.png" />
+    <preference name="AndroidPersistentFileLocation" value="Compatibility" />
+    <preference name="AndroidInsecureFileModeEnabled" value="false" />
+    <preference name="AndroidCleartextTrafficPermitted" value="false" />
+    <preference name="Scheme" value="https" />
+    <preference name="Hostname" value="www.constructorahroman.cl" />
+    <preference name="ClearDataOnUpdate" value="true" />
+    <preference name="LoadUrlTimeoutValue" value="60000" />
+    <preference name="StatusBarOverlaysWebView" value="false" />
+    <preference name="StatusBarBackgroundColor" value="#000000" />
+    <preference name="StatusBarStyle" value="lightcontent" />
+    <allow-navigation href="*" />
+    <access origin="*" />
+    <platform name="android">
+        <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
+            <application android:usesCleartextTraffic="false" />
+        </edit-config>
+    </platform>
+    <plugin name="cordova-plugin-whitelist" spec="1.3.5" />
+    <plugin name="cordova-plugin-network-information" spec="3.0.0" />
+    <platform name="android">
+        <config-file parent="/manifest" target="AndroidManifest.xml">
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+        </config-file>
+    </platform>
+</widget>

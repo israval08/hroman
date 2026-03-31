@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: gap: content:">
+    <title>Formulario Combustible</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0a1320 0%, #1a2332 100%);
+            color: #e6eef8;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(22, 163, 182, 0.1);
+            border: 1px solid rgba(22, 163, 182, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #16a3b6;
+        }
+
+        .user-info {
+            background: rgba(15, 27, 47, 0.8);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+
+        .user-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #9fb3c8;
+        }
+
+        .user-info strong {
+            color: #e6eef8;
+        }
+
+        .session-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .session-status.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+
+        .session-status.reconnecting {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid #f59e0b;
+        }
+
+        .session-status.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .card {
+            background: rgba(15, 27, 47, 0.8);
+            border: 1px solid rgba(31, 53, 86, 0.5);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+        }
+
+        .card h3 {
+            color: #16a3b6;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .camion-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .camion-item {
+            background: rgba(12, 26, 43, 0.6);
+            border: 2px solid rgba(31, 53, 86, 0.5);
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .camion-item:hover {
+            border-color: #16a3b6;
+            background: rgba(22, 163, 182, 0.1);
+            transform: translateX(5px);
+        }
+
+        .camion-item.selected {
+            border-color: #16a3b6;
+            background: rgba(22, 163, 182, 0.2);
+        }
+
+        .camion-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #e6eef8;
+        }
+
+        .camion-details {
+            font-size: 13px;
+            color: #9fb3c8;
+        }
+
+        .camion-capacity {
+            display: inline-block;
+            background: rgba(22, 163, 182, 0.2);
+            color: #16a3b6;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: #16a3b6;
+            color: #07262c;
+        }
+
+        .btn-primary:hover {
+            background: #0ea5b7;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(22, 163, 182, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: rgba(22, 163, 182, 0.3);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(31, 53, 86, 0.6);
+            color: #e6eef8;
+            border: 1px solid rgba(22, 163, 182, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(22, 163, 182, 0.2);
+            border-color: #16a3b6;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert.show {
+            display: flex;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid #f59e0b;
+        }
+
+        .alert-info {
+            background: rgba(22, 163, 182, 0.2);
+            color: #16a3b6;
+            border: 1px solid #16a3b6;
+        }
+
+        .spinner {
+            border: 3px solid rgba(22, 163, 182, 0.2);
+            border-top: 3px solid #16a3b6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 19, 32, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            gap: 20px;
+        }
+
+        .loading-text {
+            color: #9fb3c8;
+            font-size: 16px;
+        }
+
+        .debug-panel {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .debug-panel h4 {
+            color: #ef4444;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .debug-line {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(239, 68, 68, 0.1);
+            color: #9fb3c8;
+        }
+
+        .debug-line:last-child {
+            border-bottom: none;
+        }
+
+        .session-timer {
+            font-size: 12px;
+            color: #9fb3c8;
+            margin-top: 5px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Verificando sesión...</div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>⛽ Formulario Combustible</h1>
+            <div class="user-info">
+                <p><strong>Usuario:</strong> <span id="userName">Cargando...</span></p>
+                <p><strong>Rol:</strong> <span id="userRole">-</span></p>
+                <p><strong>RUT:</strong> <span id="userRut">-</span></p>
+                <div>
+                    <span id="sessionStatus" class="session-status active">🟢 Sesión Activa</span>
+                    <div class="session-timer" id="sessionTimer">Última verificación: ahora</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div id="alerts"></div>
+
+            <div class="card">
+                <h3>Seleccionar Vehículo</h3>
+                
+                <button class="btn btn-secondary" onclick="reloadCamiones()">
+                    🔄 Actualizar Lista
+                </button>
+
+                <button class="btn btn-secondary" onclick="testSession()">
+                    🔍 Verificar Sesión
+                </button>
+
+                <div id="camionList" class="camion-list">
+                    <div style="text-align: center; padding: 40px 20px; color: #8e9aaf;">
+                        <div class="spinner" style="margin: 0 auto 15px;"></div>
+                        <p>Cargando vehículos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-danger" onclick="logout()">
+                🚪 Cerrar Sesión
+            </button>
+        </div>
+
+        <!-- Panel de Debug -->
+        <div id="debugPanel" class="debug-panel hidden">
+            <h4>🐛 Debug Console</h4>
+            <div id="debugContent"></div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="toggleDebug()" style="margin-top: 20px;">
+            🐛 Toggle Debug
+        </button>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        // CONFIGURACIÓN
+        // ═══════════════════════════════════════════════════════════
+        const CONFIG = {
+            API_BASE: 'https://www.constructorahroman.cl/crm/api',
+            SESSION_CHECK_INTERVAL: 30000, // 30 segundos
+            SESSION_REFRESH_INTERVAL: 60000, // 1 minuto
+            MAX_RETRY_ATTEMPTS: 3,
+            RETRY_DELAY: 2000,
+            REQUEST_TIMEOUT: 10000
+        };
+
+        // ═══════════════════════════════════════════════════════════
+        // ESTADO GLOBAL
+        // ═══════════════════════════════════════════════════════════
+        const state = {
+            user: null,
+            csrf: null,
+            camiones: [],
+            selectedCamion: null,
+            sessionCheckTimer: null,
+            sessionRefreshTimer: null,
+            lastSessionCheck: null,
+            isReconnecting: false,
+            retryCount: 0
+        };
+
+        // ═══════════════════════════════════════════════════════════
+        // DEBUG Y LOGS
+        // ═══════════════════════════════════════════════════════════
+        function debugLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const icons = {
+                info: 'ℹ️',
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                network: '📡'
+            };
+            
+            const icon = icons[type] || 'ℹ️';
+            const logMessage = `[${timestamp}] ${icon} ${message}`;
+            
+            console.log(logMessage);
+            
+            const debugContent = document.getElementById('debugContent');
+            if (debugContent) {
+                const line = document.createElement('div');
+                line.className = 'debug-line';
+                line.textContent = logMessage;
+                debugContent.insertBefore(line, debugContent.firstChild);
+                
+                // Limitar a 50 líneas
+                while (debugContent.children.length > 50) {
+                    debugContent.removeChild(debugContent.lastChild);
+                }
+            }
+        }
+
+        function toggleDebug() {
+            const panel = document.getElementById('debugPanel');
+            panel.classList.toggle('hidden');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // ALERTAS
+        // ═══════════════════════════════════════════════════════════
+        function showAlert(message, type = 'info', duration = 5000) {
+            const alertsContainer = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} show`;
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            alert.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${message}</span>`;
+            alertsContainer.appendChild(alert);
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    alert.classList.remove('show');
+                    setTimeout(() => alert.remove(), 300);
+                }, duration);
+            }
+            
+            return alert;
+        }
+
+        function clearAlerts() {
+            document.getElementById('alerts').innerHTML = '';
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // ESTADO DE SESIÓN UI
+        // ═══════════════════════════════════════════════════════════
+        function updateSessionStatus(status, message = '') {
+            const statusEl = document.getElementById('sessionStatus');
+            const timerEl = document.getElementById('sessionTimer');
+            
+            statusEl.className = 'session-status';
+            
+            switch(status) {
+                case 'active':
+                    statusEl.classList.add('active');
+                    statusEl.textContent = '🟢 Sesión Activa';
+                    break;
+                case 'reconnecting':
+                    statusEl.classList.add('reconnecting');
+                    statusEl.textContent = '🟡 Reconectando...';
+                    break;
+                case 'error':
+                    statusEl.classList.add('error');
+                    statusEl.textContent = '🔴 Sesión Perdida';
+                    break;
+            }
+            
+            if (message) {
+                timerEl.textContent = message;
+            } else {
+                const lastCheck = state.lastSessionCheck ? 
+                    new Date(state.lastSessionCheck).toLocaleTimeString() : 
+                    'nunca';
+                timerEl.textContent = `Última verificación: ${lastCheck}`;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // FETCH CON RETRY Y TIMEOUT
+        // ═══════════════════════════════════════════════════════════
+        async function fetchWithRetry(url, options = {}, retries = CONFIG.MAX_RETRY_ATTEMPTS) {
+            debugLog(`Fetching: ${url}`, 'network');
+            
+            // Agregar timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+            
+            // Configuración por defecto
+            const defaultOptions = {
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                signal: controller.signal
+            };
+            
+            // Agregar CSRF token si existe
+            if (state.csrf) {
+                defaultOptions.headers['X-CSRF-Token'] = state.csrf;
+            }
+            
+            const finalOptions = { ...defaultOptions, ...options };
+            
+            try {
+                const response = await fetch(url, finalOptions);
+                clearTimeout(timeoutId);
+                
+                debugLog(`Response ${response.status} from ${url}`, 
+                    response.ok ? 'success' : 'error');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Actualizar CSRF si viene en la respuesta
+                if (data.csrf_token) {
+                    state.csrf = data.csrf_token;
+                    localStorage.setItem('csrf_token', data.csrf_token);
+                    debugLog('CSRF token actualizado', 'success');
+                }
+                
+                return { success: true, data };
+                
+            } catch (error) {
+                clearTimeout(timeoutId);
+                debugLog(`Error: ${error.message}`, 'error');
+                
+                if (error.name === 'AbortError') {
+                    debugLog('Request timeout', 'warning');
+                }
+                
+                // Reintentar si quedan intentos
+                if (retries > 0 && error.name !== 'AbortError') {
+                    debugLog(`Reintentando... (${CONFIG.MAX_RETRY_ATTEMPTS - retries + 1}/${CONFIG.MAX_RETRY_ATTEMPTS})`, 'warning');
+                    await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY));
+                    return fetchWithRetry(url, options, retries - 1);
+                }
+                
+                return { success: false, error: error.message };
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // VERIFICACIÓN DE SESIÓN
+        // ═══════════════════════════════════════════════════════════
+        async function checkSession() {
+            debugLog('Verificando sesión...', 'network');
+            
+            const result = await fetchWithRetry(`${CONFIG.API_BASE}/session_check.php`);
+            
+            if (result.success && result.data.authenticated) {
+                debugLog('Sesión válida', 'success');
+                state.lastSessionCheck = Date.now();
+                state.retryCount = 0;
+                updateSessionStatus('active');
+                
+                // Actualizar datos de usuario si vienen
+                if (result.data.user) {
+                    state.user = result.data.user;
+                    updateUserUI();
+                }
+                
+                return true;
+            } else {
+                debugLog('Sesión inválida o perdida', 'error');
+                updateSessionStatus('error', 'Sesión perdida');
+                
+                // Intentar reconectar
+                if (!state.isReconnecting) {
+                    attemptReconnect();
+                }
+                
+                return false;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // RECONEXIÓN AUTOMÁTICA
+        // ═══════════════════════════════════════════════════════════
+        async function attemptReconnect() {
+            if (state.isReconnecting) {
+                debugLog('Ya hay una reconexión en progreso', 'warning');
+                return;
+            }
+            
+            state.isReconnecting = true;
+            state.retryCount++;
+            
+            debugLog(`Intento de reconexión #${state.retryCount}`, 'warning');
+            updateSessionStatus('reconnecting', `Intento ${state.retryCount}...`);
+            
+            // Intentar reautenticar con credenciales guardadas
+            const savedRut = localStorage.getItem('last_rut');
+            const savedPassword = localStorage.getItem('last_password');
+            
+            if (savedRut && savedPassword) {
+                debugLog('Intentando reautenticar con credenciales guardadas', 'info');
+                
+                const result = await fetchWithRetry(`${CONFIG.API_BASE}/login.php`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        rut: savedRut,
+                        password: savedPassword
+                    })
+                });
+                
+                if (result.success && result.data.success) {
+                    debugLog('Reconexión exitosa', 'success');
+                    state.user = result.data.user;
+                    state.csrf = result.data.csrf_token;
+                    state.isReconnecting = false;
+                    state.retryCount = 0;
+                    
+                    updateSessionStatus('active');
+                    updateUserUI();
+                    showAlert('✅ Sesión restaurada automáticamente', 'success');
+                    
+                    // Recargar camiones
+                    loadCamiones();
+                    return true;
+                }
+            }
+            
+            state.isReconnecting = false;
+            
+            // Si falla, preguntar al usuario
+            if (state.retryCount >= CONFIG.MAX_RETRY_ATTEMPTS) {
+                debugLog('Máximo de reintentos alcanzado', 'error');
+                showAlert('❌ No se pudo restaurar la sesión. Por favor, inicia sesión nuevamente.', 'error', 0);
+                
+                // Esperar 3 segundos y redirigir al login
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 3000);
+            } else {
+                // Reintentar después de un delay
+                setTimeout(() => {
+                    attemptReconnect();
+                }, CONFIG.RETRY_DELAY * state.retryCount);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // REFRESH PERIÓDICO DE SESIÓN
+        // ═══════════════════════════════════════════════════════════
+        async function refreshSession() {
+            debugLog('Refrescando sesión (keep-alive)...', 'network');
+            
+            const result = await fetchWithRetry(`${CONFIG.API_BASE}/session_refresh.php`, {
+                method: 'POST'
+            });
+            
+            if (result.success) {
+                debugLog('Sesión refrescada', 'success');
+                return true;
+            } else {
+                debugLog('Error al refrescar sesión', 'error');
+                return false;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // INICIAR TIMERS DE SESIÓN
+        // ═══════════════════════════════════════════════════════════
+        function startSessionMonitoring() {
+            debugLog('Iniciando monitoreo de sesión', 'info');
+            
+            // Limpiar timers existentes
+            if (state.sessionCheckTimer) {
+                clearInterval(state.sessionCheckTimer);
+            }
+            if (state.sessionRefreshTimer) {
+                clearInterval(state.sessionRefreshTimer);
+            }
+            
+            // Timer de verificación
+            state.sessionCheckTimer = setInterval(() => {
+                checkSession();
+            }, CONFIG.SESSION_CHECK_INTERVAL);
+            
+            // Timer de refresh
+            state.sessionRefreshTimer = setInterval(() => {
+                refreshSession();
+            }, CONFIG.SESSION_REFRESH_INTERVAL);
+            
+            debugLog(`Timers configurados: check cada ${CONFIG.SESSION_CHECK_INTERVAL/1000}s, refresh cada ${CONFIG.SESSION_REFRESH_INTERVAL/1000}s`, 'success');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // ACTUALIZAR UI DE USUARIO
+        // ═══════════════════════════════════════════════════════════
+        function updateUserUI() {
+            if (state.user) {
+                document.getElementById('userName').textContent = 
+                    `${state.user.nombre} ${state.user.apellido}`;
+                document.getElementById('userRole').textContent = 
+                    state.user.tipo.toUpperCase();
+                document.getElementById('userRut').textContent = 
+                    state.user.rut;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // CARGAR CAMIONES
+        // ═══════════════════════════════════════════════════════════
+        async function loadCamiones() {
+            debugLog('Cargando lista de camiones...', 'network');
+            
+            const result = await fetchWithRetry(`${CONFIG.API_BASE}/list_camiones.php`);
+            
+            if (result.success && result.data.success) {
+                state.camiones = result.data.camiones;
+                debugLog(`${state.camiones.length} camiones cargados`, 'success');
+                renderCamiones();
+            } else {
+                debugLog('Error al cargar camiones', 'error');
+                showAlert('❌ Error al cargar vehículos: ' + (result.error || 'Error desconocido'), 'error');
+                
+                // Verificar si es problema de sesión
+                checkSession();
+            }
+        }
+
+        function renderCamiones() {
+            const container = document.getElementById('camionList');
+            
+            if (!state.camiones || state.camiones.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: #8e9aaf;">
+                        <p>📭 No hay vehículos disponibles</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = state.camiones.map(camion => `
+                <div class="camion-item ${state.selectedCamion?.id_activo === camion.id_activo ? 'selected' : ''}" 
+                     onclick="selectCamion(${camion.id_activo})">
+                    <div class="camion-title">
+                        ${camion.tipo === 'estanque' ? '🛢️' : '🚛'} 
+                        ${camion.identificacion}
+                    </div>
+                    <div class="camion-details">
+                        ${camion.tipo === 'estanque' ? 'Estanque' : 'Camión Surtidor'}
+                    </div>
+                    <span class="camion-capacity">
+                        📏 ${parseInt(camion.capacidad_aljibe).toLocaleString()} L
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function selectCamion(id) {
+            const camion = state.camiones.find(c => c.id_activo === id);
+            if (camion) {
+                state.selectedCamion = camion;
+                debugLog(`Camión seleccionado: ${camion.identificacion}`, 'success');
+                showAlert(`✅ Vehículo seleccionado: ${camion.identificacion}`, 'success', 3000);
+                renderCamiones();
+                
+                // Aquí puedes guardar en localStorage o continuar con el flujo
+                localStorage.setItem('selected_camion', JSON.stringify(camion));
+            }
+        }
+
+        function reloadCamiones() {
+            debugLog('Recargando lista de camiones...', 'info');
+            loadCamiones();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // TEST MANUAL DE SESIÓN
+        // ═══════════════════════════════════════════════════════════
+        async function testSession() {
+            clearAlerts();
+            showAlert('🔍 Verificando sesión...', 'info', 0);
+            
+            const isValid = await checkSession();
+            
+            clearAlerts();
+            if (isValid) {
+                showAlert('✅ Sesión válida y activa', 'success');
+            } else {
+                showAlert('❌ Sesión inválida. Reconectando...', 'error');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // LOGOUT
+        // ═══════════════════════════════════════════════════════════
+        async function logout() {
+            if (!confirm('¿Estás seguro que deseas cerrar sesión?')) {
+                return;
+            }
+            
+            debugLog('Cerrando sesión...', 'info');
+            
+            // Limpiar timers
+            if (state.sessionCheckTimer) clearInterval(state.sessionCheckTimer);
+            if (state.sessionRefreshTimer) clearInterval(state.sessionRefreshTimer);
+            
+            // Llamar a logout en el servidor
+            await fetchWithRetry(`${CONFIG.API_BASE}/logout.php`, {
+                method: 'POST'
+            });
+            
+            // Limpiar localStorage (excepto credenciales para reconexión)
+            localStorage.removeItem('csrf_token');
+            localStorage.removeItem('selected_camion');
+            
+            debugLog('Sesión cerrada', 'success');
+            
+            // Redirigir al login
+            window.location.href = 'index.html';
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // INICIALIZACIÓN
+        // ═══════════════════════════════════════════════════════════
+        async function init() {
+            debugLog('Iniciando aplicación...', 'info');
+            
+            try {
+                // Cargar CSRF del localStorage
+                state.csrf = localStorage.getItem('csrf_token');
+                
+                // Verificar sesión
+                const isValid = await checkSession();
+                
+                if (!isValid) {
+                    debugLog('No hay sesión válida, redirigiendo...', 'warning');
+                    showAlert('❌ Sesión inválida. Redirigiendo...', 'error');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                    return;
+                }
+                
+                // Sesión válida, continuar
+                debugLog('Sesión válida, cargando interfaz...', 'success');
+                
+                // Ocultar loading, mostrar contenido
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('mainContent').classList.remove('hidden');
+                
+                // Actualizar UI
+                updateUserUI();
+                
+                // Iniciar monitoreo de sesión
+                startSessionMonitoring();
+                
+                // Cargar camiones
+                await loadCamiones();
+                
+                debugLog('Aplicación lista', 'success');
+                showAlert('✅ Aplicación lista', 'success', 3000);
+                
+            } catch (error) {
+                debugLog('Error fatal en inicialización: ' + error.message, 'error');
+                showAlert('❌ Error al iniciar: ' + error.message, 'error', 0);
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 3000);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // EVENT LISTENERS
+        // ═══════════════════════════════════════════════════════════
+        
+        // Detectar cuando la app vuelve a estar visible
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                debugLog('App visible de nuevo, verificando sesión...', 'info');
+                checkSession();
+            }
+        });
+
+        // Detectar cuando la app vuelve del background (Cordova)
+        document.addEventListener('resume', () => {
+            debugLog('App resume desde background', 'info');
+            checkSession();
+            loadCamiones();
+        });
+
+        // Detectar cuando la app va al background (Cordova)
+        document.addEventListener('pause', () => {
+            debugLog('App en background', 'info');
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        // START
+        // ═══════════════════════════════════════════════════════════
+        
+        // Esperar a que Cordova esté listo (si aplica)
+        if (window.cordova) {
+            document.addEventListener('deviceready', init);
+        } else {
+            // Navegador normal
+            window.addEventListener('DOMContentLoaded', init);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#0a1929">
+    <link rel="manifest" href="manifest.json">
+    <title>Mi Resumen - App HRoman</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: linear-gradient(135deg, #0a1929 0%, #1a2980 100%); color: #fff; min-height: 100vh; }
+
+        /* HEADER */
+        .header { padding: 16px 15px 0; }
+        .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .header-top img { width: 40px; height: 40px; border-radius: 8px; }
+        .header-top h1 { font-size: 18px; }
+        .header-top h1 small { display: block; font-size: 12px; color: #8e9aaf; font-weight: 400; margin-top: 2px; }
+        .camion-badge { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.4); border-radius: 10px; padding: 10px 14px; margin-bottom: 0; display: flex; align-items: center; gap: 10px; }
+        .camion-badge .cb-icon { font-size: 26px; }
+        .camion-badge .cb-info h3 { font-size: 15px; color: #4CAF50; font-weight: 700; }
+        .camion-badge .cb-info p { font-size: 12px; color: #8e9aaf; margin-top: 2px; }
+        .camion-badge .cb-saldo { margin-left: auto; text-align: right; }
+        .camion-badge .cb-saldo .val { font-size: 20px; font-weight: 700; color: #4CAF50; }
+        .camion-badge .cb-saldo .lbl { font-size: 10px; color: #8e9aaf; }
+
+        /* TABS */
+        .tabs { display: flex; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.08); margin-top: 14px; }
+        .tab { flex: 1; padding: 13px 8px; text-align: center; font-size: 13px; font-weight: 600; color: #8e9aaf; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .tab.active { color: #4CAF50; border-bottom-color: #4CAF50; background: rgba(76,175,80,0.05); }
+        .tab span { display: block; font-size: 18px; margin-bottom: 3px; }
+
+        /* PANEL */
+        .panel { display: none; padding: 14px 15px 100px; }
+        .panel.active { display: block; }
+
+        /* STATUS */
+        .status-offline { background: #FF9800; color: white; padding: 8px 15px; text-align: center; font-size: 12px; }
+        .loading { text-align: center; padding: 50px 20px; color: #8e9aaf; }
+        .loading .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #4CAF50; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* RANGO DE FECHAS */
+        .rango-picker { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+        .rango-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .rango-inputs label { font-size: 11px; color: #8e9aaf; display: block; margin-bottom: 4px; }
+        .rango-inputs input[type=date] { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; padding: 8px 10px; font-size: 13px; -webkit-appearance: none; }
+        .rango-inputs input[type=date]:focus { outline: none; border-color: #4CAF50; }
+        .rango-presets { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+        .preset-btn { flex: 1; min-width: 60px; padding: 7px 4px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #b0bec5; font-size: 11px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .preset-btn.active, .preset-btn:active { background: rgba(76,175,80,0.25); border-color: rgba(76,175,80,0.5); color: #81C784; }
+        .btn-ver { width: 100%; padding: 10px; background: linear-gradient(135deg, #1565C0, #1976D2); border: none; border-radius: 9px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+        .btn-ver:active { opacity: 0.85; }
+        .rango-label { text-align: center; font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+
+        .resumen-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .r-card { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 14px 12px; text-align: center; border: 1px solid rgba(255,255,255,0.08); }
+        .r-card .val { font-size: 24px; font-weight: 700; line-height: 1.1; }
+        .r-card .lbl { font-size: 11px; color: #8e9aaf; margin-top: 5px; }
+        .r-card.verde .val { color: #4CAF50; }
+        .r-card.rojo .val { color: #f44336; }
+        .r-card.azul .val { color: #2196F3; }
+        .r-card.naranja .val { color: #FF9800; }
+        .r-card.full { grid-column: 1 / -1; }
+
+        .section-title { font-size: 13px; font-weight: 700; color: #8e9aaf; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 10px; }
+
+        /* HISTORIAL MENSUAL (lista de meses) */
+        .mes-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+        .mes-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; cursor: pointer; }
+        .mes-item-header h3 { font-size: 15px; font-weight: 700; text-transform: capitalize; }
+        .mes-item-header .mes-total { font-size: 13px; color: #f44336; font-weight: 700; }
+        .mes-ops { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .mes-op { border-radius: 8px; padding: 8px 10px; }
+        .mes-op.carga { background: rgba(76,175,80,0.12); border: 1px solid rgba(76,175,80,0.25); }
+        .mes-op.descarga { background: rgba(244,67,54,0.12); border: 1px solid rgba(244,67,54,0.25); }
+        .mes-op .op-val { font-size: 17px; font-weight: 700; }
+        .mes-op.carga .op-val { color: #4CAF50; }
+        .mes-op.descarga .op-val { color: #f44336; }
+        .mes-op .op-lbl { font-size: 11px; color: #8e9aaf; margin-top: 3px; }
+        .mes-op .op-count { font-size: 11px; color: #8e9aaf; }
+
+        /* ACTIVOS */
+        .search-bar { display: flex; align-items: center; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; gap: 8px; }
+        .search-bar input { background: none; border: none; outline: none; color: #fff; font-size: 14px; flex: 1; }
+        .search-bar input::placeholder { color: #8e9aaf; }
+
+        .activo-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+        .activo-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+        .activo-header .activo-id { font-size: 16px; font-weight: 700; color: #fff; }
+        .activo-header .activo-tipo { font-size: 11px; color: #8e9aaf; margin-top: 3px; }
+        .activo-total { background: rgba(244,67,54,0.15); border: 1px solid rgba(244,67,54,0.3); border-radius: 8px; padding: 6px 12px; text-align: right; }
+        .activo-total .val { font-size: 18px; font-weight: 700; color: #f44336; }
+        .activo-total .lbl { font-size: 10px; color: #8e9aaf; }
+        .activo-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .meta-chip { background: rgba(255,255,255,0.07); border-radius: 6px; padding: 4px 10px; font-size: 11px; color: #b0bec5; }
+        .meta-chip strong { color: #fff; }
+        .activo-cargas { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 10px; max-height: 160px; overflow-y: auto; }
+        .activo-carga-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; }
+        .activo-carga-row:last-child { border-bottom: none; }
+        .activo-carga-row .acr-fecha { color: #8e9aaf; }
+        .activo-carga-row .acr-qty { color: #f44336; font-weight: 600; }
+        .activo-carga-row .acr-chofer { color: #b0bec5; flex: 1; padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .expand-btn { background: none; border: none; color: #4CAF50; font-size: 12px; cursor: pointer; padding: 4px 0; width: 100%; text-align: center; margin-top: 6px; }
+
+        .empty { text-align: center; padding: 50px 20px; color: #8e9aaf; }
+        .empty span { font-size: 40px; display: block; margin-bottom: 12px; }
+
+        /* BOTTOM NAV */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,25,41,0.97); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 10px 0 20px; border-top: 1px solid rgba(255,255,255,0.1); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #8e9aaf; font-size: 10px; cursor: pointer; padding: 5px 6px; }
+        .nav-item.active { color: #4CAF50; }
+        .nav-item span { font-size: 20px; margin-bottom: 3px; }
+
+        /* UTILS */
+        .badge-pending { background: #FF9800; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; vertical-align: middle; }
+
+        /* CARGA DIRECTA ROWS (no-surtidor lista) */
+        .op-row { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-left: 4px solid #4CAF50; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+        .op-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .op-row-patente { font-size: 15px; font-weight: 700; color: #fff; }
+        .op-row-fecha { font-size: 11px; color: #8e9aaf; }
+        .op-row-litros { font-size: 20px; font-weight: 700; color: #4CAF50; margin-bottom: 6px; }
+        .op-row-meta { display: flex; flex-wrap: wrap; gap: 5px; }
+        .op-meta-chip { background: rgba(255,255,255,0.07); border-radius: 5px; padding: 3px 8px; font-size: 11px; color: #b0bec5; }
+
+
+        /* VEHICULO ITEM (no-surtidor activos tab) */
+        .vehiculo-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+        .vehiculo-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .vehiculo-patente { font-size: 17px; font-weight: 700; color: #fff; }
+        .vehiculo-tipo { font-size: 11px; color: #8e9aaf; margin-top: 2px; }
+        .vehiculo-total { background: rgba(76,175,80,0.12); border: 1px solid rgba(76,175,80,0.25); border-radius: 8px; padding: 6px 12px; text-align: right; }
+        .vehiculo-total .val { font-size: 18px; font-weight: 700; color: #4CAF50; }
+        .vehiculo-total .lbl { font-size: 10px; color: #8e9aaf; }
+        .vehiculo-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .vstat { background: rgba(255,255,255,0.07); border-radius: 6px; padding: 4px 10px; font-size: 11px; color: #b0bec5; }
+        .vstat strong { color: #fff; }
+        .v-ops { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 10px; max-height: 180px; overflow-y: auto; }
+        .v-op-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; }
+        .v-op-row:last-child { border-bottom: none; }
+        .v-op-fecha { color: #8e9aaf; min-width: 65px; }
+        .v-op-litros { color: #4CAF50; font-weight: 600; min-width: 55px; }
+        .v-op-est { color: #b0bec5; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .v-op-med { color: #607D8B; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+    <div id="offlineBar" class="status-offline" style="display:none;">📴 Sin conexión — mostrando datos locales</div>
+    <!-- debugBar removed -->
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-top">
+            <img src="img/logo.png" alt="Logo" onerror="this.src='https://www.constructorahroman.cl/www/img/hroman.png'">
+            <h1>📊 Mi Resumen
+                <small id="userSubtitle">Cargando...</small>
+            </h1>
+        </div>
+        <div class="camion-badge" id="camionBadge" style="display:none;">
+            <div class="cb-icon">🚛</div>
+            <div class="cb-info">
+                <h3 id="badgeCamion">—</h3>
+                <p id="badgeTipo">Camión Surtidor</p>
+            </div>
+            <div class="cb-saldo">
+                <div class="val" id="badgeSaldo">—</div>
+                <div class="lbl">litros</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('mensual')" id="tab-mensual">
+            <span>📊</span>Resumen
+        </div>
+        <div class="tab" onclick="showTab('activos')" id="tab-activos">
+            <span>🚗</span>Vehículos
+        </div>
+    </div>
+
+    <!-- PANEL MENSUAL -->
+    <div class="panel active" id="panel-mensual">
+        <div id="mensualLoading" class="loading">
+            <div class="spinner"></div>
+            Cargando registros...
+        </div>
+
+        <div id="mensualContent" style="display:none;">
+            <!-- Selector de rango de fechas -->
+            <div class="rango-picker">
+                <div class="rango-inputs">
+                    <div>
+                        <label>📅 Desde</label>
+                        <input type="date" id="rangoDesde">
+                    </div>
+                    <div>
+                        <label>📅 Hasta</label>
+                        <input type="date" id="rangoHasta">
+                    </div>
+                </div>
+                <div class="rango-presets">
+                    <div class="preset-btn" onclick="setPreset('hoy',this)">Hoy</div>
+                    <div class="preset-btn" onclick="setPreset('semana',this)">Semana</div>
+                    <div class="preset-btn" onclick="setPreset('mes',this)" id="presetMes">Este mes</div>
+                    <div class="preset-btn" onclick="setPreset('todo',this)">Todo</div>
+                </div>
+                <button class="btn-ver" onclick="aplicarRango()">🔍 Ver Período</button>
+            </div>
+
+            <!-- Label del rango actual -->
+            <div class="rango-label" id="rangoLabel">—</div>
+
+            <!-- Cards resumen (renderizadas dinámicamente por rol) -->
+            <div class="resumen-cards" id="mesCards"></div>
+
+            <!-- Lista de operaciones del período -->
+            <div class="section-title" id="listaTitle">📆 Operaciones del período</div>
+            <div id="listaMeses"></div>
+
+        </div>
+    </div>
+
+    <!-- PANEL ACTIVOS -->
+    <div class="panel" id="panel-activos">
+        <div id="activosLoading" class="loading" style="display:none;">
+            <div class="spinner"></div>
+            Cargando activos...
+        </div>
+
+        <div id="activosContent">
+            <div class="search-bar">
+                <span>🔍</span>
+                <input type="text" id="activoSearch" placeholder="Buscar patente o activo..." oninput="filterActivos()">
+            </div>
+            <div id="listaActivos"></div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="goTo('index.html')"><span>⛽</span>Registro</div>
+        <div class="nav-item" onclick="goTo('registros.html')"><span>📋</span>Historial</div>
+        <div class="nav-item active"><span>📊</span>Resumen</div>
+        <div class="nav-item" onclick="goTo('checklist.html')"><span>✅</span>Checklist</div>
+        <div class="nav-item" onclick="quickSync()"><span>☁️</span>Sync</div>
+        <div class="nav-item" onclick="goTo('configuracion.html')"><span>⚙️</span>Config</div>
+        <div class="nav-item" onclick="doLogout()"><span>🚪</span>Salir</div>
+    </div>
+
+    <script>
+        // Captura errores globales (solo console)
+        window.onerror = function(msg, url, line, col, err) {
+            console.error('JS-ERR:', msg, 'L:', line);
+        };
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('PROMISE-ERR:', e.reason?.message || e.reason);
+        });
+
+        const API = 'https://www.constructorahroman.cl/crm/api';
+        const DB_NAME = 'SurtidorDB';
+        const DB_VERSION = 7;
+
+        let db = null;
+        let isOnline = navigator.onLine;
+
+        // Estado
+        const state = {
+            user:            null,
+            isSurtidor:      false,
+            camion:          null,
+            registros:       [],   // registros del usuario
+            rangoDesde:      null,
+            rangoHasta:      null,
+            activosFull:     [],
+            activosFiltrados:[]
+        };
+
+        // ─── IndexedDB helpers ────────────────────────────────────────
+        function initDB() {
+            return new Promise((res, rej) => {
+                const req = indexedDB.open(DB_NAME, DB_VERSION);
+                req.onerror = () => rej(req.error);
+                req.onsuccess = () => { db = req.result; res(db); };
+                req.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    const oldVersion = e.oldVersion;
+
+                    if (oldVersion < 6) {
+                        ['session','marcas','areas','activos','usuarios','camiones','saldos','pendingSync','registros','mediciones'].forEach(name => {
+                            if (d.objectStoreNames.contains(name)) d.deleteObjectStore(name);
+                        });
+                        d.createObjectStore('session',   { keyPath: 'key' });
+                        d.createObjectStore('marcas',    { keyPath: 'id' });
+                        d.createObjectStore('areas',     { keyPath: 'id' });
+                        d.createObjectStore('activos',   { keyPath: 'id_activo' });
+                        d.createObjectStore('usuarios',  { keyPath: 'id' });
+                        d.createObjectStore('camiones',  { keyPath: 'id_activo' });
+                        d.createObjectStore('saldos',    { keyPath: 'id_activo' });
+                        const ps = d.createObjectStore('pendingSync', { keyPath: 'id', autoIncrement: true });
+                        ps.createIndex('timestamp', 'timestamp');
+                        const rs = d.createObjectStore('registros', { keyPath: 'id', autoIncrement: true });
+                        rs.createIndex('timestamp', 'timestamp');
+                        d.createObjectStore('mediciones', { keyPath: 'id_activo' });
+                    }
+
+                    if (oldVersion < 7) {
+                        if (!d.objectStoreNames.contains('checklists')) {
+                            const cs = d.createObjectStore('checklists', { keyPath: 'id', autoIncrement: true });
+                            cs.createIndex('timestamp', 'timestamp');
+                            cs.createIndex('id_activo', 'id_activo');
+                        }
+                    }
+                };
+            });
+        }
+
+        const dbGetAll = (store) => new Promise(res => {
+            try {
+                const tx = db.transaction(store, 'readonly');
+                const req = tx.objectStore(store).getAll();
+                req.onsuccess = () => res(req.result || []);
+                req.onerror = () => res([]);
+            } catch(e) { res([]); }
+        });
+
+        const dbGet = (store, key) => new Promise(res => {
+            try {
+                const tx = db.transaction(store, 'readonly');
+                const req = tx.objectStore(store).get(key);
+                req.onsuccess = () => res(req.result);
+                req.onerror = () => res(null);
+            } catch(e) { res(null); }
+        });
+
+        // ─── API ──────────────────────────────────────────────────────
+        async function apiFetch(endpoint) {
+            const r = await fetch(`${API}/${endpoint}`);
+            return r.json();
+        }
+
+        // ─── INIT ─────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            try { await initDB(); } catch(e) { console.warn('DB:', e); }
+
+            window.addEventListener('online',  () => { isOnline = true;  document.getElementById('offlineBar').style.display = 'none'; });
+            window.addEventListener('offline', () => { isOnline = false; document.getElementById('offlineBar').style.display = 'block'; });
+            if (!isOnline) document.getElementById('offlineBar').style.display = 'block';
+
+            await checkSession();
+        });
+
+        // ─── SESIÓN ───────────────────────────────────────────────────
+        async function checkSession() {
+            let user = null, camion = null;
+
+            // localStorage primero
+            try {
+                const saved = localStorage.getItem('session');
+                if (saved) { const d = JSON.parse(saved); user = d.user || null; }
+            } catch(e) {}
+
+            // IndexedDB como fallback
+            if (!user && db) {
+                const u = await dbGet('session', 'user');
+                if (u?.data) user = u.data;
+            }
+
+            // Camión guardado
+            try {
+                const sc = localStorage.getItem('selected_camion');
+                if (sc) camion = JSON.parse(sc);
+            } catch(e) {}
+            if (!camion && db) {
+                const c = await dbGet('session', 'camion');
+                if (c?.data) camion = c.data;
+            }
+
+            if (!user) { window.location.href = 'index.html'; return; }
+
+            state.user       = user;
+            state.camion     = camion;
+            state.isSurtidor = (user.tipo || '').toLowerCase().trim() === 'surtidor';
+
+            // Mostrar info usuario
+            document.getElementById('userSubtitle').textContent = `${user.nombre} ${user.apellido}`;
+
+            // Badge de camión solo para surtidor
+            if (state.isSurtidor && camion) {
+                document.getElementById('badgeCamion').textContent = camion.identificacion || '—';
+                document.getElementById('badgeTipo').textContent   = camion.tipo || 'Camión Surtidor';
+                const saldo = parseFloat(camion.saldo_actual || 0);
+                document.getElementById('badgeSaldo').textContent  = saldo.toLocaleString('es-CL');
+                document.getElementById('camionBadge').style.display = 'flex';
+            }
+
+            // Etiquetas de tabs según rol
+            if (state.isSurtidor) {
+                document.getElementById('tab-activos').innerHTML = '<span>🚛</span>Activos';
+            } else {
+                document.getElementById('tab-mensual').innerHTML = '<span>📊</span>Mi Resumen';
+                document.getElementById('tab-activos').innerHTML = '<span>🚗</span>Mis Vehículos';
+            }
+
+            await loadAllRegistros();
+        }
+
+        // ─── CARGA DE REGISTROS ────────────────────────────────────────
+        async function loadAllRegistros() {
+            let all = [];
+
+            // Debug via console only
+            const dbg = (msg) => { console.log('[resumen]', msg); };
+
+            // 1. Locales guardados (cache offline)
+            let localRegs = [];
+            try { localRegs = await dbGetAll('registros'); } catch(e) { dbg('ERR-local:'+e.message); }
+
+            // 2. Pendientes aún no sincronizados
+            let pending = [];
+            try { pending = await dbGetAll('pendingSync'); } catch(e) { dbg('ERR-pending:'+e.message); }
+            const pendingRegs = pending.map(p => ({
+                ...p.payload,
+                timestamp: p.timestamp,
+                pending: true,
+                id: `pending-${p.id}`
+            }));
+
+            all = [...localRegs, ...pendingRegs];
+            dbg(`local:${localRegs.length} pend:${pendingRegs.length} online:${isOnline} user:${state.user?.id}`);
+
+            // 3. Si hay internet: servidor es fuente de verdad + pendientes no sincronizados
+            if (isOnline) {
+                try {
+                    const url = `get_registros.php?id_usuario=${state.user.id}&limit=500`;
+                    dbg(`fetch:${url}`);
+                    const server = await apiFetch(url);
+                    dbg(`resp:${typeof server} isArr:${Array.isArray(server)} len:${Array.isArray(server) ? server.length : 'N/A'}`);
+                    if (!Array.isArray(server)) {
+                        dbg(`resp-body:${JSON.stringify(server).substring(0,200)}`);
+                    }
+                    if (Array.isArray(server) && server.length) {
+                        all = [...server, ...pendingRegs];
+                        try {
+                            const tx = db.transaction('registros', 'readwrite');
+                            const st = tx.objectStore('registros');
+                            st.clear();
+                            server.forEach(r => {
+                                const rid = Number(r.id_registro || r.id) || undefined;
+                                st.put({ ...r, id: rid });
+                            });
+                        } catch(e) { dbg('cache-err:'+e.message); }
+                    }
+                } catch(e) { dbg(`ERR:${e.message}`); }
+            }
+
+            dbg(`pre-filter:${all.length} isSurtidor:${state.isSurtidor} camion:${state.camion?.id_activo||'null'}`);
+
+            // 4. Filtrar según rol
+            if (state.isSurtidor && state.camion) {
+                // Surtidor: solo registros de su camión aljibe
+                const cId = state.camion.id_activo;
+                all = all.filter(r => r.id_activo == cId);
+            } else if (!state.isSurtidor) {
+                // No-surtidor: solo sus cargas directas
+                all = all.filter(r => r.tipo_movimiento === 'carga');
+            }
+
+            dbg(`post-filter:${all.length}`);
+
+            // 5. Ordenar más reciente primero
+            all.sort((a, b) => {
+                const da = a.fecha_hora ? new Date(a.fecha_hora) : new Date(a.timestamp);
+                const db2 = b.fecha_hora ? new Date(b.fecha_hora) : new Date(b.timestamp);
+                return db2 - da;
+            });
+
+            state.registros = all;
+
+            buildMensual();
+            buildActivos();
+        }
+
+// ═══════════════════════════════════════════════════════════════
+        //  TAB 1 — RESUMEN POR RANGO DE FECHAS
+        // ═══════════════════════════════════════════════════════════════
+
+        // Inicializar el picker con "este mes" por defecto
+        function initRangoPicker() {
+            setPreset('mes', document.getElementById('presetMes'));
+        }
+
+        function toInputDate(d) {
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+
+        function setPreset(preset, el) {
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            if (el) el.classList.add('active');
+            const hoy = new Date();
+            let desde, hasta = hoy;
+            if (preset === 'hoy') {
+                desde = hoy;
+            } else if (preset === 'semana') {
+                desde = new Date(hoy); desde.setDate(hoy.getDate() - 6);
+            } else if (preset === 'mes') {
+                desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            } else { // todo
+                desde = new Date(2020, 0, 1);
+            }
+            document.getElementById('rangoDesde').value = toInputDate(desde);
+            document.getElementById('rangoHasta').value = toInputDate(hasta);
+        }
+
+        function aplicarRango() {
+            const desdeStr = document.getElementById('rangoDesde').value;
+            const hastaStr = document.getElementById('rangoHasta').value;
+            if (!desdeStr || !hastaStr) { alert('Selecciona ambas fechas'); return; }
+
+            const desde = new Date(desdeStr + 'T00:00:00');
+            const hasta = new Date(hastaStr + 'T23:59:59');
+
+            if (desde > hasta) { alert('La fecha de inicio debe ser anterior a la fecha final'); return; }
+
+            state.rangoDesde = desde;
+            state.rangoHasta = hasta;
+            renderRango();
+        }
+
+        function buildMensual() {
+            document.getElementById('mensualLoading').style.display = 'none';
+            document.getElementById('mensualContent').style.display = 'block';
+
+            if (!state.registros.length) {
+                document.getElementById('listaMeses').innerHTML =
+                    '<div class="empty"><span>📭</span>Sin registros aún.<br><small>Los movimientos aparecerán aquí después de sincronizar.</small></div>';
+                document.getElementById('rangoLabel').textContent = 'Sin datos';
+                return;
+            }
+
+            initRangoPicker();
+            aplicarRango();
+        }
+
+        function renderRango() {
+            const desde = state.rangoDesde;
+            const hasta = state.rangoHasta;
+            const fmtDate = d => d.toLocaleDateString('es-CL', { day:'2-digit', month:'short', year:'numeric' });
+
+            // Registros en el rango
+            const enRango = state.registros.filter(r => {
+                const f = r.fecha_hora ? new Date(r.fecha_hora) : new Date(r.timestamp);
+                return f >= desde && f <= hasta;
+            });
+
+            document.getElementById('rangoLabel').textContent = `📅 ${fmtDate(desde)} — ${fmtDate(hasta)}`;
+
+            if (state.isSurtidor) {
+                // ── SURTIDOR ─────────────────────────────────────────────
+                const cargas    = enRango.filter(r => r.tipo_movimiento === 'carga');
+                const descargas = enRango.filter(r => r.tipo_movimiento === 'descarga');
+                const totalCarg = cargas.reduce((s, r) => s + parseFloat(r.cantidad || 0), 0);
+                const totalDesc = descargas.reduce((s, r) => s + parseFloat(r.cantidad || 0), 0);
+                const actUnicos = new Set(descargas.map(r => r.id_activo_destino || r._activo_nombre || 'x')).size;
+
+                document.getElementById('mesCards').innerHTML = `
+                    <div class="r-card verde">
+                        <div class="val">${totalCarg.toLocaleString('es-CL')}</div>
+                        <div class="lbl">⬆️ L cargados al aljibe</div>
+                    </div>
+                    <div class="r-card rojo">
+                        <div class="val">${totalDesc.toLocaleString('es-CL')}</div>
+                        <div class="lbl">⬇️ L descargados</div>
+                    </div>
+                    <div class="r-card azul">
+                        <div class="val">${descargas.length}</div>
+                        <div class="lbl">Descargas realizadas</div>
+                    </div>
+                    <div class="r-card naranja">
+                        <div class="val">${actUnicos}</div>
+                        <div class="lbl">Activos atendidos</div>
+                    </div>`;
+
+                document.getElementById('listaTitle').textContent = '📆 Operaciones del período';
+                renderListaRangoSurtidor(enRango);
+
+            } else {
+                // ── NO-SURTIDOR ───────────────────────────────────────────
+                const totalCarg = enRango.reduce((s, r) => s + parseFloat(r.cantidad || 0), 0);
+                const vehUnicos = new Set(enRango.map(r => r.id_activos || r.id_activo || 'x')).size;
+
+                document.getElementById('mesCards').innerHTML = `
+                    <div class="r-card verde">
+                        <div class="val">${totalCarg.toLocaleString('es-CL')}</div>
+                        <div class="lbl">⬆️ Litros cargados</div>
+                    </div>
+                    <div class="r-card azul">
+                        <div class="val">${enRango.length}</div>
+                        <div class="lbl">🔁 Operaciones</div>
+                    </div>
+                    <div class="r-card naranja full">
+                        <div class="val">${vehUnicos}</div>
+                        <div class="lbl">🚗 Vehículos usados</div>
+                    </div>`;
+
+                document.getElementById('listaTitle').textContent = '⛽ Mis cargas del período';
+                renderListaRangoDirecta(enRango);
+            }
+        }
+
+        // Lista agrupada por día — SURTIDOR
+        function renderListaRangoSurtidor(registros) {
+            const container = document.getElementById('listaMeses');
+            if (!registros.length) {
+                container.innerHTML = '<div class="empty"><span>🔍</span>Sin registros en este período.</div>';
+                return;
+            }
+            const diasMap = {};
+            registros.forEach(r => {
+                const f   = r.fecha_hora ? new Date(r.fecha_hora) : new Date(r.timestamp);
+                const key = toInputDate(f);
+                if (!diasMap[key]) diasMap[key] = { cargas: [], descargas: [] };
+                if (r.tipo_movimiento === 'carga')    diasMap[key].cargas.push(r);
+                if (r.tipo_movimiento === 'descarga') diasMap[key].descargas.push(r);
+            });
+            const dias = Object.keys(diasMap).sort((a, b) => b.localeCompare(a));
+            container.innerHTML = dias.map(key => {
+                const data = diasMap[key];
+                const [y, mo, d] = key.split('-');
+                const nombre     = new Date(+y, +mo-1, +d).toLocaleDateString('es-CL', { weekday:'short', day:'numeric', month:'long' });
+                const totalDesc  = data.descargas.reduce((s, r) => s + parseFloat(r.cantidad || 0), 0);
+                const totalCarg  = data.cargas.reduce((s, r) => s + parseFloat(r.cantidad || 0), 0);
+                return `<div class="mes-item">
+                    <div class="mes-item-header" style="cursor:default;">
+                        <h3 style="text-transform:capitalize;">${nombre}</h3>
+                        ${totalDesc > 0 ? `<span class="mes-total">-${totalDesc.toLocaleString('es-CL')} L</span>` : ''}
+                    </div>
+                    <div class="mes-ops">
+                        ${data.descargas.length ? `<div class="mes-op descarga">
+                            <div class="op-val">⬇️ ${totalDesc.toLocaleString('es-CL')} L</div>
+                            <div class="op-lbl">Descargados</div>
+                            <div class="op-count">${data.descargas.length} op.</div>
+                        </div>` : ''}
+                        ${data.cargas.length ? `<div class="mes-op carga">
+                            <div class="op-val">⬆️ ${totalCarg.toLocaleString('es-CL')} L</div>
+                            <div class="op-lbl">Al aljibe</div>
+                            <div class="op-count">${data.cargas.length} op.</div>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // Lista detallada de cargas — NO-SURTIDOR
+        function renderListaRangoDirecta(registros) {
+            const container = document.getElementById('listaMeses');
+            if (!registros.length) {
+                container.innerHTML = '<div class="empty"><span>🔍</span>Sin cargas en este período.</div>';
+                return;
+            }
+            container.innerHTML = registros.map(r => {
+                const f       = r.fecha_hora ? new Date(r.fecha_hora) : new Date(r.timestamp);
+                const fecha   = formatDate(f);
+                const patente = r.destino_identificacion || r._activo_nombre || (r.id_activos ? `ID:${r.id_activos}` : '—');
+                const litros  = parseFloat(r.cantidad || 0).toLocaleString('es-CL');
+                const est     = r.estacion_nombre || r._surtidor_nombre || '';
+                const med     = r.medicion_valor;
+                const comb    = fmtCombustible(r.tipo_combustible);
+                const boleta  = r.numero_boleta;
+                return `<div class="op-row">
+                    <div class="op-row-header">
+                        <span class="op-row-patente">🚗 ${patente}</span>
+                        <span class="op-row-fecha">${fecha}</span>
+                    </div>
+                    <div class="op-row-litros">+${litros} L</div>
+                    <div class="op-row-meta">
+                        ${est     ? `<span class="op-meta-chip">⛽ ${est}</span>` : ''}
+                        ${comb    ? `<span class="op-meta-chip">🛢️ ${comb}</span>` : ''}
+                        ${med     ? `<span class="op-meta-chip">📏 ${Number(med).toLocaleString('es-CL')}</span>` : ''}
+                        ${boleta  ? `<span class="op-meta-chip">🧾 ${boleta}</span>` : ''}
+                        ${r.pending ? '<span class="op-meta-chip" style="color:#FF9800;">⏳ Pendiente</span>' : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // Formato legible de tipo_combustible
+        function fmtCombustible(tc) {
+            const map = { 'petroleo':'Petróleo', 'gasolina':'Gasolina', 'gasolina_93':'Gasolina 93', 'gasolina_95':'Gasolina 95', 'gasolina_97':'Gasolina 97', 'otro':'Otro' };
+            return map[tc] || tc || '';
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  TAB 2 — ACTIVOS (surtidor) / MIS VEHÍCULOS (no-surtidor)
+        // ═══════════════════════════════════════════════════════════════
+        function buildActivos() {
+            if (!state.isSurtidor) { buildVehiculos(); return; }
+
+            // ── SURTIDOR: agrupar por activo destino de descargas ──────
+            const descargas = state.registros.filter(r => r.tipo_movimiento === 'descarga');
+
+            // Agrupar por activo destino
+            const mapa = {}; // key: id_activo_destino o nombre como fallback
+
+            descargas.forEach(r => {
+                const id     = r.id_activo_destino || r._activo_nombre || 'desconocido';
+                const nombre = r.destino_identificacion || r._activo_nombre || (r.id_activo_destino ? `ID:${r.id_activo_destino}` : 'Desconocido');
+                const tipo   = r.destino_tipo || '';
+                const chofer = r.operador_nombre?.trim() || r._usuario_nombre?.trim() || '—';
+                const fecha  = r.fecha_hora
+                    ? new Date(r.fecha_hora)
+                    : new Date(r.timestamp);
+                const qty    = parseFloat(r.cantidad || 0);
+                const med    = r.medicion_valor;
+
+                if (!mapa[id]) {
+                    mapa[id] = {
+                        id, nombre, tipo,
+                        totalLitros: 0,
+                        cargas: [],
+                        ultimaFecha: fecha,
+                        ultimoChofer: chofer
+                    };
+                }
+
+                mapa[id].totalLitros += qty;
+                mapa[id].cargas.push({ fecha, qty, chofer, med, pending: r.pending });
+
+                if (fecha > mapa[id].ultimaFecha) {
+                    mapa[id].ultimaFecha  = fecha;
+                    mapa[id].ultimoChofer = chofer;
+                }
+            });
+
+            // Ordenar activos por total litros desc
+            state.activosFull = Object.values(mapa).sort((a, b) => b.totalLitros - a.totalLitros);
+
+            // Ordenar cargas de cada activo por fecha desc
+            state.activosFull.forEach(a => {
+                a.cargas.sort((x, y) => y.fecha - x.fecha);
+            });
+
+            state.activosFiltrados = [...state.activosFull];
+            renderActivos();
+        }
+
+        // ── NO-SURTIDOR: agrupar cargas por vehículo ──────────────────
+        function buildVehiculos() {
+            const mapa = {};
+            state.registros.forEach(r => {
+                const id     = r.id_activos || r.id_activo || 'desconocido';
+                const nombre = r.destino_identificacion || r._activo_nombre || (r.id_activos ? `ID:${r.id_activos}` : '—');
+                const tipo   = r.destino_tipo || '';
+                const fecha  = r.fecha_hora ? new Date(r.fecha_hora) : new Date(r.timestamp);
+                const qty    = parseFloat(r.cantidad || 0);
+                const est    = r.estacion_nombre || '';
+                const med    = r.medicion_valor ? parseFloat(r.medicion_valor) : null;
+
+                if (!mapa[id]) {
+                    mapa[id] = { id, nombre, tipo, totalLitros:0, ops:[], ultimaFecha: fecha, ultimoMed: null, estaciones: new Set() };
+                }
+                mapa[id].totalLitros += qty;
+                mapa[id].ops.push({ fecha, qty, est, med, tipo_comb: r.tipo_combustible, boleta: r.numero_boleta, pending: r.pending });
+                if (est) mapa[id].estaciones.add(est);
+                if (fecha > mapa[id].ultimaFecha) mapa[id].ultimaFecha = fecha;
+                if (med && (!mapa[id].ultimoMed || fecha >= mapa[id].ultimaFecha)) mapa[id].ultimoMed = med;
+            });
+
+            state.activosFull = Object.values(mapa).sort((a, b) => b.totalLitros - a.totalLitros);
+            state.activosFull.forEach(a => {
+                a.ops.sort((x, y) => y.fecha - x.fecha);
+                a.estaciones = [...a.estaciones];
+            });
+            state.activosFiltrados = [...state.activosFull];
+            renderActivos();
+        }
+
+        function filterActivos() {
+            const q = document.getElementById('activoSearch').value.trim().toLowerCase();
+            state.activosFiltrados = q
+                ? state.activosFull.filter(a =>
+                    a.nombre.toLowerCase().includes(q) ||
+                    String(a.id).toLowerCase().includes(q))
+                : [...state.activosFull];
+            renderActivos();
+        }
+
+        function renderActivos() {
+            const container = document.getElementById('listaActivos');
+            if (!state.activosFiltrados.length) {
+                container.innerHTML = `<div class="empty"><span>${state.isSurtidor ? '🚛' : '🚗'}</span>Sin vehículos registrados aún.</div>`;
+                return;
+            }
+
+            if (state.isSurtidor) {
+                // ── SURTIDOR: activos atendidos vía descargas ─────────
+                container.innerHTML = state.activosFiltrados.map((a, idx) => {
+                    const ultimaFechaStr = formatDate(a.ultimaFecha);
+                    const mkFila = c => `<div class="activo-carga-row">
+                        <span class="acr-fecha">${formatDate(c.fecha)}</span>
+                        <span class="acr-chofer">${c.chofer}</span>
+                        <span class="acr-qty">-${c.qty.toLocaleString('es-CL')} L</span>
+                        ${c.med ? `<span style="font-size:11px;color:#607D8B;margin-left:6px;">📏${Number(c.med).toLocaleString('es-CL')}</span>` : ''}
+                        ${c.pending ? '<span class="badge-pending">⏳</span>' : ''}
+                    </div>`;
+                    const preview    = a.cargas.slice(0, 3).map(mkFila).join('');
+                    const todas      = a.cargas.map(mkFila).join('');
+                    const hayMas     = a.cargas.length > 3;
+                    return `<div class="activo-item">
+                        <div class="activo-header">
+                            <div>
+                                <div class="activo-id">🚗 ${a.nombre}</div>
+                                ${a.tipo ? `<div class="activo-tipo">${a.tipo}</div>` : ''}
+                            </div>
+                            <div class="activo-total">
+                                <div class="val">${a.totalLitros.toLocaleString('es-CL')} L</div>
+                                <div class="lbl">despachados</div>
+                            </div>
+                        </div>
+                        <div class="activo-meta">
+                            <span class="meta-chip">🔁 <strong>${a.cargas.length}</strong> despacho${a.cargas.length !== 1 ? 's' : ''}</span>
+                            <span class="meta-chip">📅 <strong>${ultimaFechaStr}</strong></span>
+                            <span class="meta-chip">👤 <strong>${a.ultimoChofer}</strong></span>
+                        </div>
+                        <div class="activo-cargas" id="cargas-${idx}">${preview}</div>
+                        ${hayMas ? `<button class="expand-btn" onclick="toggleCargas(${idx},this)" data-expanded="false" data-preview="${encodeURIComponent(preview)}" data-todas="${encodeURIComponent(todas)}">▼ Ver los ${a.cargas.length} despachos</button>` : ''}
+                    </div>`;
+                }).join('');
+
+            } else {
+                // ── NO-SURTIDOR: mis vehículos ──────────────────────────
+                container.innerHTML = state.activosFiltrados.map((a, idx) => {
+                    const ultimoMedStr = a.ultimoMed ? `📏 ${Number(a.ultimoMed).toLocaleString('es-CL')}` : null;
+                    const mkFila = op => `<div class="v-op-row">
+                        <span class="v-op-fecha">${formatDate(op.fecha)}</span>
+                        <span class="v-op-litros">+${op.qty.toLocaleString('es-CL')} L</span>
+                        <span class="v-op-est">${op.est || '—'}</span>
+                        ${op.med ? `<span class="v-op-med">📏${Number(op.med).toLocaleString('es-CL')}</span>` : ''}
+                        ${op.pending ? '<span class="badge-pending">⏳</span>' : ''}
+                    </div>`;
+                    const preview = a.ops.slice(0, 3).map(mkFila).join('');
+                    const todas   = a.ops.map(mkFila).join('');
+                    const hayMas  = a.ops.length > 3;
+
+                    return `<div class="vehiculo-item">
+                        <div class="vehiculo-header">
+                            <div>
+                                <div class="vehiculo-patente">🚗 ${a.nombre}</div>
+                                ${a.tipo ? `<div class="vehiculo-tipo">${a.tipo}</div>` : ''}
+                            </div>
+                            <div class="vehiculo-total">
+                                <div class="val">${a.totalLitros.toLocaleString('es-CL')} L</div>
+                                <div class="lbl">total cargado</div>
+                            </div>
+                        </div>
+                        <div class="vehiculo-stats">
+                            <span class="vstat">🔁 <strong>${a.ops.length}</strong> carga${a.ops.length !== 1 ? 's' : ''}</span>
+                            ${ultimoMedStr ? `<span class="vstat">${ultimoMedStr}</span>` : ''}
+                            ${a.estaciones.length ? `<span class="vstat">⛽ ${a.estaciones.join(', ')}</span>` : ''}
+                        </div>
+                        ${a.ops.length ? `
+                        <div class="v-ops" id="cargas-${idx}">${preview}</div>
+                        ${hayMas ? `<button class="expand-btn" onclick="toggleCargas(${idx},this)" data-expanded="false" data-preview="${encodeURIComponent(preview)}" data-todas="${encodeURIComponent(todas)}">▼ Ver las ${a.ops.length} cargas</button>` : ''}` : ''}
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        function toggleCargas(idx, btn) {
+            const expanded = btn.dataset.expanded === 'true';
+            const container = document.getElementById(`cargas-${idx}`);
+            if (expanded) {
+                container.innerHTML = decodeURIComponent(btn.dataset.preview);
+                btn.textContent = `▼ Ver todas las cargas`;
+                btn.dataset.expanded = 'false';
+            } else {
+                container.innerHTML = decodeURIComponent(btn.dataset.todas);
+                btn.textContent = '▲ Ocultar';
+                btn.dataset.expanded = 'true';
+            }
+        }
+
+        // ─── HELPERS ──────────────────────────────────────────────────
+        function formatDate(d) {
+            const date = d instanceof Date ? d : new Date(d);
+            if (isNaN(date.getTime())) return '—';
+            return `${date.getDate().toString().padStart(2,'0')}/${(date.getMonth()+1).toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+        }
+
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(`tab-${name}`).classList.add('active');
+            document.getElementById(`panel-${name}`).classList.add('active');
+        }
+
+        function goTo(url) { window.location.href = url; }
+
+        async function quickSync() {
+            if (!navigator.onLine) { alert('Sin conexión a internet'); return; }
+            const btn = event.target.closest('.nav-item');
+            if (btn) btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;border-top-color:#fff;animation:spin .7s linear infinite;"></span> Sync...';
+            try {
+                const pending = await dbGetAll('pendingSync');
+                let synced = 0;
+                for (const item of pending) {
+                    try {
+                        const res = await fetch(`${API}/sync.php`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(item.payload) });
+                        const data = await res.json();
+                        if (data.success) { await dbDelete('pendingSync', item.id); synced++; }
+                    } catch(e) {}
+                }
+                await loadAllRegistros();
+                alert(synced > 0 ? `✅ ${synced} registro(s) sincronizado(s)` : '✅ Datos actualizados');
+            } catch(e) { alert('Error: ' + e.message); }
+            if (btn) btn.innerHTML = '<span>☁️</span>Sync';
+        }
+
+        async function doLogout() {
+            if (!confirm('¿Cerrar sesión?')) return;
+            try {
+                if (db) await new Promise((res, rej) => {
+                    const tx = db.transaction('session', 'readwrite');
+                    const req = tx.objectStore('session').clear();
+                    req.onsuccess = res; req.onerror = rej;
+                });
+            } catch(e) {}
+            try { await fetch('https://www.constructorahroman.cl/crm/api/logout.php', { method:'POST',  }); } catch(e) {}
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

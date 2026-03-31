@@ -1,0 +1,2910 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#0a1929">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="img/logo.png">
+    <title>App HRoman</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; overflow-x: hidden; background: #0a1929; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: linear-gradient(135deg, #0a1929 0%, #1a2980 100%); color: #fff; min-height: 100vh; }
+        .container { max-width: 100%; margin: 0 auto; padding: 15px; padding-bottom: 100px; }
+        .screen { display: none; animation: slideIn 0.35s ease; min-height: 100vh; }
+        .screen.active { display: block; }
+        @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── SPLASH ─────────────────────────────────────── */
+        #splashScreen {
+            position: fixed; inset: 0; z-index: 9999;
+            background: linear-gradient(160deg, #061422 0%, #0d2137 45%, #0f1f6e 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: opacity .6s ease, visibility .6s ease;
+        }
+        #splashScreen.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
+        .sp-logo-wrap { position: relative; width: 130px; height: 130px; margin: 0 auto 28px; }
+        .sp-logo { width: 100px; height: 100px; border-radius: 22px; object-fit: contain;
+                   background: rgba(255,255,255,0.07); padding: 12px;
+                   position: absolute; top: 15px; left: 15px;
+                   box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+        .sp-ring1 { position: absolute; inset: 0; border: 2px solid rgba(76,175,80,0.35);
+                    border-radius: 30px; animation: ringPulse 2.4s ease-in-out infinite; }
+        .sp-ring2 { position: absolute; inset: -10px; border: 1px solid rgba(76,175,80,0.15);
+                    border-radius: 38px; animation: ringPulse 2.4s ease-in-out infinite .4s; }
+        @keyframes ringPulse { 0%,100%{opacity:.3;transform:scale(1)} 50%{opacity:.9;transform:scale(1.04)} }
+        .sp-title { font-size: 28px; font-weight: 800; letter-spacing: -.5px;
+                    background: linear-gradient(135deg,#fff 60%,#81C784); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .sp-sub { font-size: 13px; color: #607d8b; margin-top: 4px; margin-bottom: 44px; letter-spacing: .5px; }
+        .sp-bar-wrap { width: 220px; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; margin: 0 auto 14px; }
+        .sp-bar { height: 100%; width: 0%; border-radius: 2px;
+                  background: linear-gradient(90deg,#43A047,#66BB6A);
+                  transition: width .5s cubic-bezier(.4,0,.2,1); }
+        .sp-txt { font-size: 12px; color: rgba(255,255,255,.35); letter-spacing: .3px; }
+        .sp-version { position: absolute; bottom: 32px; font-size: 11px; color: rgba(255,255,255,.2); }
+        .logo { text-align: center; margin: 20px 0; }
+        .logo-image { width: 80px; height: 80px; border-radius: 16px; background: rgba(255,255,255,0.1); padding: 10px; }
+        .logo h1 { font-size: 22px; margin: 10px 0 5px; }
+        .logo p { font-size: 13px; color: #8e9aaf; }
+        .card { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border-radius: 16px; padding: 20px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #e0e0e0; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 2px solid rgba(255,255,255,0.2); border-radius: 10px; background: rgba(255,255,255,0.1); color: #fff; font-size: 16px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #4CAF50; }
+        .form-group input::placeholder { color: rgba(255,255,255,0.5); }
+        .form-group input.error { border-color: #f44336; }
+        .error-msg { color: #f44336; font-size: 12px; margin-top: 4px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, opacity .15s; }
+        .btn:active { transform: scale(0.97); opacity: 0.88; }
+        .btn-primary { background: linear-gradient(135deg, #43A047, #2E7D32); color: white; box-shadow: 0 4px 18px rgba(76,175,80,0.35); }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 2px solid rgba(255,255,255,0.3); }
+        .btn-danger { background: linear-gradient(135deg, #f44336, #d32f2f); color: white; }
+        .btn-info { background: linear-gradient(135deg, #2196F3, #1976D2); color: white; }
+        .btn:disabled { opacity: 0.5; pointer-events: none; }
+        .btn-sm { padding: 8px 12px; font-size: 12px; width: auto; }
+        .alert { padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 14px; }
+        .alert-success { background: rgba(76,175,80,0.2); border: 1px solid #4CAF50; color: #4CAF50; }
+        .alert-error { background: rgba(244,67,54,0.2); border: 1px solid #f44336; color: #f44336; }
+        .alert-info { background: rgba(33,150,243,0.2); border: 1px solid #2196F3; color: #2196F3; }
+        .alert-warning { background: rgba(255,152,0,0.2); border: 1px solid #FF9800; color: #FF9800; }
+        .user-info { text-align: center; padding: 15px; background: rgba(76,175,80,0.1); border-radius: 10px; margin-bottom: 15px; border: 1px solid rgba(76,175,80,0.3); }
+        .user-info h2 { font-size: 16px; margin-bottom: 4px; }
+        .user-info p { font-size: 12px; color: #8e9aaf; }
+        .camion-list { max-height: 350px; overflow-y: auto; }
+        .camion-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-left: 3px solid rgba(76,175,80,0.5); border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: background .15s, border-color .15s, transform .1s; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+        .camion-item:active { background: rgba(76,175,80,0.12); border-left-color: #4CAF50; transform: scale(0.98); }
+        .camion-item h3 { font-size: 16px; margin-bottom: 4px; }
+        .camion-item p { font-size: 12px; color: #8e9aaf; }
+        .saldo-info { background: rgba(76,175,80,0.1); border: 2px solid rgba(76,175,80,0.3); border-radius: 10px; padding: 14px; margin-bottom: 15px; }
+        .saldo-info h3 { font-size: 14px; color: #4CAF50; margin-bottom: 8px; }
+        .progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 8px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4CAF50, #45a049); border-radius: 4px; transition: width 0.3s; }
+        .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-group-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .search-container { position: relative; }
+        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: rgba(30,40,60,0.98); border: 2px solid rgba(255,255,255,0.2); border-radius: 10px; max-height: 200px; overflow-y: auto; z-index: 100; margin-top: 4px; }
+        .search-result-item { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
+        .search-result-item:active { background: rgba(76,175,80,0.2); }
+        .selected-info { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.3); border-radius: 8px; padding: 10px; margin-top: 8px; font-size: 13px; color: #4CAF50; }
+        select option { background: #1a2980; color: #fff; }
+        .status-bar { position: fixed; top: 0; left: 0; right: 0; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; z-index: 1000; transition: all 0.3s; }
+        .status-bar.online { background: #4CAF50; color: white; transform: translateY(-100%); }
+        .status-bar.offline { background: #FF9800; color: white; transform: translateY(0); }
+        .status-bar.syncing { background: #2196F3; color: white; transform: translateY(0); }
+        .status-bar.show { transform: translateY(0); }
+        .status-bar.manual { background: #9C27B0; color: white; transform: translateY(0); }
+        .status-bar.weak-signal { background: #FF5722; color: white; transform: translateY(0); }
+        .signal-indicator { position: fixed; top: 0; right: 10px; z-index: 1001; font-size: 11px; padding: 3px 8px; border-radius: 0 0 6px 6px; font-weight: 600; transition: all 0.3s; }
+        .signal-indicator.good { background: #4CAF50; color: #fff; }
+        .signal-indicator.medium { background: #FF9800; color: #fff; }
+        .signal-indicator.poor { background: #f44336; color: #fff; }
+        .signal-indicator.offline { background: #607D8B; color: #fff; }
+        /* VEHÍCULO DEL DÍA */
+        .vehiculo-dia { background: rgba(33,150,243,0.12); border: 1px solid rgba(33,150,243,0.35); border-radius: 12px; padding: 12px 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .vehiculo-dia .vd-icon { font-size: 28px; }
+        .vehiculo-dia .vd-info { flex: 1; }
+        .vehiculo-dia .vd-info strong { font-size: 15px; color: #64B5F6; }
+        .vehiculo-dia .vd-info span { display: block; font-size: 11px; color: #8e9aaf; margin-top: 2px; }
+        .vehiculo-dia .vd-change { font-size: 11px; color: #FF9800; font-weight: 600; white-space: nowrap; }
+        .vd-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .vd-modal { background: linear-gradient(135deg, #0d2137 0%, #1a2980 100%); border-radius: 16px; padding: 24px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.15); }
+        .vd-modal h3 { text-align: center; margin-bottom: 6px; font-size: 18px; }
+        .vd-modal p { text-align: center; font-size: 12px; color: #8e9aaf; margin-bottom: 16px; }
+        .vd-modal .vd-search { width: 100%; padding: 12px; border: 2px solid rgba(255,255,255,0.2); border-radius: 10px; background: rgba(255,255,255,0.08); color: #fff; font-size: 15px; margin-bottom: 12px; }
+        .vd-modal .vd-search:focus { outline: none; border-color: #2196F3; }
+        .vd-modal .vd-list { max-height: 300px; overflow-y: auto; }
+        .vd-modal .vd-item { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); cursor: pointer; border-radius: 8px; margin-bottom: 4px; transition: background 0.15s; }
+        .vd-modal .vd-item:active { background: rgba(33,150,243,0.2); }
+        .vd-modal .vd-item strong { font-size: 15px; color: #64B5F6; }
+        .vd-modal .vd-item span { display: block; font-size: 11px; color: #8e9aaf; margin-top: 2px; }
+        .pending-badge { position: fixed; bottom: 80px; right: 15px; background: #FF9800; color: white; padding: 10px 15px; border-radius: 20px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 15px rgba(255,152,0,0.4); z-index: 100; cursor: pointer; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(6,18,30,0.97); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 10px 0 20px; border-top: 1px solid rgba(255,255,255,0.08); box-shadow: 0 -4px 24px rgba(0,0,0,0.4); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #8e9aaf; font-size: 10px; cursor: pointer; padding: 5px 6px; }
+        .nav-item.active { color: #4CAF50; }
+        .nav-item span { font-size: 20px; margin-bottom: 3px; }
+        .nav-item.has-pending span { color: #FF9800; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal { background: linear-gradient(135deg, #0a1929 0%, #1a2980 100%); border-radius: 16px; padding: 20px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
+        .modal h3 { margin-bottom: 15px; font-size: 18px; }
+        .pending-item { background: rgba(255,152,0,0.1); border: 2px solid rgba(255,152,0,0.3); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+        .pending-item.error { border-color: #f44336; background: rgba(244,67,54,0.1); }
+        .pending-item h4 { font-size: 14px; color: #FF9800; margin-bottom: 8px; }
+        .pending-item p { font-size: 12px; color: #8e9aaf; margin: 4px 0; }
+        .pending-item .error-text { color: #f44336; font-size: 11px; }
+        .pending-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .sync-info { background: rgba(33,150,243,0.1); border: 1px solid rgba(33,150,243,0.3); border-radius: 8px; padding: 10px; margin-bottom: 15px; font-size: 12px; color: #2196F3; }
+        .sync-warning { background: rgba(255,152,0,0.1); border: 1px solid rgba(255,152,0,0.3); border-radius: 8px; padding: 10px; margin-bottom: 15px; font-size: 12px; color: #FF9800; }
+        .sync-log { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto; font-size: 11px; font-family: monospace; }
+        .sync-log p { margin: 2px 0; }
+        .sync-log .ok { color: #4CAF50; }
+        .sync-log .err { color: #f44336; }
+        .sync-log .warn { color: #FF9800; }
+        .medicion-suggestion { background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.3); border-radius: 6px; padding: 6px 10px; margin-top: 4px; font-size: 11px; color: #4CAF50; }
+        .medicion-warning { background: rgba(244,67,54,0.1); border: 1px solid rgba(244,67,54,0.3); border-radius: 6px; padding: 6px 10px; margin-top: 4px; font-size: 11px; color: #f44336; }
+        .app-version { text-align: center; font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 20px; padding: 10px; }
+        .manual-sync-notice { background: rgba(156,39,176,0.15); border: 1px solid rgba(156,39,176,0.4); border-radius: 8px; padding: 8px 12px; margin-bottom: 15px; font-size: 11px; color: #CE93D8; text-align: center; }
+        .foto-boleta-wrap { margin-top: 8px; }
+        .foto-boleta-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 10px; background: rgba(255,255,255,0.05); color: #8e9aaf; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .foto-boleta-btn:active { background: rgba(76,175,80,0.1); border-color: rgba(76,175,80,0.4); }
+        .foto-boleta-btn.has-foto { border-color: rgba(76,175,80,0.5); background: rgba(76,175,80,0.1); color: #4CAF50; }
+        .foto-boleta-preview { position: relative; margin-top: 8px; }
+        .foto-boleta-preview img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+        .foto-boleta-preview .remove-foto { position: absolute; top: 6px; right: 6px; background: rgba(244,67,54,0.9); color: #fff; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <!-- SPLASH SCREEN -->
+    <div id="splashScreen">
+        <div style="text-align:center;padding:20px;">
+            <div class="sp-logo-wrap">
+                <img src="img/logo.png" alt="Logo" class="sp-logo"
+                     onerror="this.src='https://www.constructorahroman.cl/www/img/hroman.png'">
+                <div class="sp-ring1"></div>
+                <div class="sp-ring2"></div>
+            </div>
+            <div class="sp-title">App HRoman</div>
+            <div class="sp-sub">CONSTRUCTORA H ROMAN</div>
+            <div class="sp-bar-wrap"><div class="sp-bar" id="spBar"></div></div>
+            <div class="sp-txt" id="spTxt">Iniciando aplicación…</div>
+        </div>
+        <div class="sp-version">v2.2.0 · Israel Valenzuela Lavín</div>
+    </div>
+
+    <div class="status-bar" id="statusBar" style="transform:translateY(-100%)"></div>
+    <div class="signal-indicator offline" id="signalIndicator" style="display:none;">📶 --</div>
+    <div class="pending-badge hidden" id="pendingBadge" onclick="showPendingModal()">⏳ 0 pendientes</div>
+
+    <!-- MODAL PENDIENTES -->
+    <div class="modal-overlay hidden" id="pendingModal">
+        <div class="modal">
+            <h3>📋 Registros Pendientes</h3>
+            <p style="font-size:12px;color:#8e9aaf;margin-bottom:15px;">Revisa y edita antes de sincronizar.</p>
+            <div id="pendingList"></div>
+            <div class="btn-group" style="margin-top:15px;">
+                <button class="btn btn-info" onclick="forceSyncAll()">🔄 Sincronizar Todo</button>
+                <button class="btn btn-secondary" onclick="closePendingModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SYNC -->
+    <div class="modal-overlay hidden" id="syncModal">
+        <div class="modal">
+            <h3>☁️ Sincronización</h3>
+            <p id="syncModalStatus" style="font-size:14px;margin-bottom:15px;">Conectando...</p>
+            <div class="sync-log" id="syncLog"></div>
+            <button class="btn btn-secondary" style="margin-top:15px;" onclick="closeSyncModal()">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginScreen" class="screen active">
+        <div class="container">
+            <div class="logo">
+                <img src="img/logo.png" alt="Logo" class="logo-image" onerror="this.src='https://www.constructorahroman.cl/www/img/hroman.png'">
+                <h1>App HRoman</h1>
+                <p>Sistema de Gestión de Combustible</p>
+            </div>
+            <div class="manual-sync-notice" id="loginSyncNotice" style="display:none;"></div>
+            <div id="loginAlert"></div>
+            <div class="card">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>📝 RUT</label>
+                        <input type="text" id="rut" placeholder="Ej: 12.345.678-9" required inputmode="numeric">
+                    </div>
+                    <div class="form-group">
+                        <label>🔒 Contraseña</label>
+                        <input type="password" id="clave" placeholder="Ingresa tu contraseña" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="loginBtn">🚀 Iniciar Sesión</button>
+                </form>
+            </div>
+            <div class="app-version">v2.2.0 — H Roman · Israel Valenzuela Lavín</div>
+        </div>
+    </div>
+
+    <!-- SELECCIÓN CAMIÓN -->
+    <div id="camionScreen" class="screen">
+        <div class="container">
+            <div class="logo">
+                <img src="img/logo.png" alt="Logo" class="logo-image" onerror="this.src='https://www.constructorahroman.cl/www/img/hroman.png'">
+                <h1>Seleccionar Camión</h1>
+            </div>
+            <div class="user-info">
+                <h2 id="userName">👤 Usuario</h2>
+                <p id="userRole">-</p>
+            </div>
+            <div id="camionAlert"></div>
+            <div id="syncWarning" class="sync-warning hidden">
+                ⚠️ <strong>Pocos datos locales.</strong> Presiona "☁️ Sync" para descargar todos los activos y mediciones.
+            </div>
+            <div class="sync-info" id="syncInfo">
+                📦 <span id="syncStats">Cargando...</span>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom: 12px; font-size: 15px;">🚛 Camiones Surtidores</h3>
+                <div id="camionList" class="camion-list"><p style="text-align:center;color:#8e9aaf;padding:30px;">Cargando...</p></div>
+            </div>
+            <div class="btn-group btn-group-3">
+                <button class="btn btn-secondary" onclick="loadCamiones()">🔄</button>
+                <button class="btn btn-info" onclick="fullSync()">☁️ Sync</button>
+                <button class="btn btn-danger" onclick="logout()">🚪</button>
+            </div>
+            <button class="btn btn-primary" onclick="goToChecklist()" style="margin-top: 10px;">✅ Ir a Checklist</button>
+            <div class="app-version">v2.2.0 — H Roman · Israel Valenzuela Lavín</div>
+        </div>
+    </div>
+
+    <!-- REGISTRO MOVIMIENTO -->
+    <div id="registroScreen" class="screen">
+        <div class="container">
+            <div class="saldo-info">
+                <h3 id="camionSeleccionado">🚛 Camión</h3>
+                <div class="progress-bar"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
+                <p style="font-size:13px;"><span id="saldoActual">0</span> / <span id="capacidadTotal">0</span> L</p>
+            </div>
+            <div class="manual-sync-notice" id="syncNotice"></div>
+            <div id="registroAlert"></div>
+            <div class="card">
+                <form id="registroForm" novalidate>
+                    <div class="form-group">
+                        <label>📊 Tipo *</label>
+                        <select id="tipoMovimiento" required>
+                            <option value="">Selecciona...</option>
+                            <option value="carga">Carga</option>
+                            <option value="descarga" id="opcionDescarga">Descarga</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>💧 Cantidad (L) *</label>
+                        <input type="number" id="cantidad" step="0.01" min="1" placeholder="Ej: 100" required inputmode="decimal">
+                    </div>
+                    <div id="camposCarga" class="hidden">
+                        <div class="form-group">
+                            <label>🏪 Estación *</label>
+                            <select id="marca"><option value="">Cargando...</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label>🧾 N° Boleta</label>
+                            <input type="text" id="numeroBoleta" placeholder="Opcional">
+                        </div>
+                        <div class="form-group">
+                            <label>📷 Foto Boleta <small style="color:#8e9aaf">(opcional)</small></label>
+                            <div class="foto-boleta-wrap">
+                                <input type="file" id="fotoBoleta" accept="image/*" capture="environment" style="display:none" onchange="previewFoto(this,'fotoBoletaPreview','fotoBoleta')">
+                                <div class="foto-boleta-btn" id="fotoBoletaBtn" onclick="document.getElementById('fotoBoleta').click()">📷 Tomar foto o seleccionar</div>
+                                <div class="foto-boleta-preview hidden" id="fotoBoletaPreview">
+                                    <img id="fotoBoletaImg" src="">
+                                    <button type="button" class="remove-foto" onclick="removeFoto('fotoBoleta','fotoBoletaPreview','fotoBoletaBtn')">✕</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>💵 Precio por Litro (CLP) *</label>
+                            <input type="number" id="precioCombustible" step="1" min="100" max="3000" placeholder="Ej: 1150" inputmode="numeric">
+                            <p style="font-size:11px;color:#8e9aaf;margin-top:4px;">
+                                💡 Rango normal: $900 - $1.500 por litro
+                            </p>
+                        </div>
+                    </div>
+                    <div id="camposDescarga" class="hidden">
+                        <div class="form-group search-container">
+                            <label>🔍 Activo Destino *</label>
+                            <input type="text" id="activoSearch" placeholder="Patente o identificación" autocomplete="off">
+                            <div id="activoSearchResults" class="search-results hidden"></div>
+                        </div>
+                        <div id="selectedActivoInfo" class="selected-info hidden">✓ <span id="selectedActivoText"></span></div>
+                        <div class="form-group">
+                            <label>📍 Área *</label>
+                            <select id="area"><option value="">Cargando...</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label id="medicionLabel">📏 Km/Horómetro *</label>
+                            <input type="number" id="medicionValor" step="0.01" min="0" placeholder="Ej: 15000" inputmode="decimal">
+                            <p id="medicionError" class="error-msg hidden"></p>
+                        </div>
+                        <div class="form-group search-container">
+                            <label>👤 Operador *</label>
+                            <input type="text" id="usuarioSearch" placeholder="RUT o nombre" autocomplete="off">
+                            <div id="usuarioSearchResults" class="search-results hidden"></div>
+                        </div>
+                        <div id="selectedUsuarioInfo" class="selected-info hidden">✓ <span id="selectedUsuarioText"></span></div>
+                    </div>
+                    <div class="form-group">
+                        <label>📝 Observaciones</label>
+                        <textarea id="observaciones" placeholder="Opcional" style="min-height:50px;resize:vertical;"></textarea>
+                    </div>
+                    <div id="gpsStatus" style="text-align:center;font-size:12px;margin-bottom:8px;min-height:16px;"></div>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">💾 Guardar Localmente</button>
+                </form>
+            </div>
+            <div class="app-version">v2.2.0 — H Roman · Israel Valenzuela Lavín</div>
+        </div>
+        <div class="bottom-nav">
+            <div class="nav-item active"><span>⛽</span>Registro</div>
+            <div class="nav-item" onclick="goToRegistros()"><span>📋</span>Historial</div>
+            <div class="nav-item" onclick="window.location.href='resumen.html'"><span>📊</span>Resumen</div>
+            <div class="nav-item" onclick="goToChecklist()"><span>✅</span>Checklist</div>
+            <div class="nav-item" onclick="showSyncModal(); fullSync();" id="navSyncBtn"><span>☁️</span>Sync</div>
+            <div class="nav-item" onclick="window.location.href='configuracion.html'"><span>⚙️</span>Config</div>
+            <div class="nav-item" onclick="logout()"><span>🚪</span>Salir</div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         CARGA DIRECTA SCREEN — usuarios no-surtidor
+    ═════════════════════════════════════════════════════════ -->
+    <div id="cargaDirectaScreen" class="screen">
+        <div class="container">
+            <div class="logo">
+                <img src="img/logo.png" alt="Logo" class="logo-image" onerror="this.src='https://www.constructorahroman.cl/www/img/hroman.png'">
+                <h1>⛽ Carga Directa</h1>
+                <p>Registro de carga de combustible</p>
+            </div>
+            <div class="user-info">
+                <h2 id="cdUserName">👤 Usuario</h2>
+                <p id="cdUserRole">—</p>
+            </div>
+            <div class="manual-sync-notice" id="cdSyncNotice"></div>
+            <div id="cdAlert"></div>
+
+            <!-- VEHÍCULO DEL DÍA -->
+            <div class="vehiculo-dia" id="vehiculoDiaBanner" onclick="showVehiculoDiaModal()" style="display:none;">
+                <span class="vd-icon">🚗</span>
+                <div class="vd-info">
+                    <strong id="vdPatente">—</strong>
+                    <span id="vdDetalle">Toca para seleccionar tu vehículo de hoy</span>
+                </div>
+                <span class="vd-change">Cambiar</span>
+            </div>
+
+            <div class="card">
+                <form id="cdForm" novalidate>
+
+                    <!-- Vehículo / Activo (oculto si hay vehículo del día, visible para cambio puntual) -->
+                    <div class="form-group search-container" id="cdActivoGroup">
+                        <label>🚗 Vehículo / Activo *</label>
+                        <input type="text" id="cdActivoSearch" placeholder="Patente o identificación" autocomplete="off">
+                        <div id="cdActivoResults" class="search-results hidden"></div>
+                    </div>
+                    <div id="cdActivoInfo" class="selected-info hidden">✓ <span id="cdActivoText"></span></div>
+
+                    <!-- Cantidad -->
+                    <div class="form-group" style="margin-top:14px;">
+                        <label>💧 Cantidad (L) *</label>
+                        <input type="number" id="cdCantidad" step="0.01" min="1" placeholder="Ej: 50" required inputmode="decimal">
+                    </div>
+
+                    <!-- Tipo combustible -->
+                    <div class="form-group">
+                        <label>⛽ Tipo combustible</label>
+                        <select id="cdTipoCombustible">
+                            <option value="petroleo">🛢️ Petróleo / Diesel</option>
+                            <option value="gasolina_93">⛽ Gasolina 93 oct.</option>
+                            <option value="gasolina_95">⛽ Gasolina 95 oct.</option>
+                            <option value="gasolina_97">⛽ Gasolina 97 oct.</option>
+                            <option value="otro">🔧 Otro</option>
+                        </select>
+                    </div>
+
+                    <!-- Medición (km / horómetro) -->
+                    <div class="form-group">
+                        <label id="cdMedicionLabel">📏 Km / Horómetro *</label>
+                        <input type="number" id="cdMedicion" step="0.1" min="0" placeholder="Ej: 45000" required inputmode="decimal">
+                    </div>
+
+                    <!-- Estación de servicio / Marca -->
+                    <div class="form-group">
+                        <label>🏪 Estación de Servicio *</label>
+                        <select id="cdMarca" required>
+                            <option value="">— Seleccionar —</option>
+                        </select>
+                    </div>
+
+                    <!-- Área -->
+                    <div class="form-group">
+                        <label>📍 Área *</label>
+                        <select id="cdArea" required>
+                            <option value="">— Seleccionar —</option>
+                        </select>
+                    </div>
+
+                    <!-- N° Boleta -->
+                    <div class="form-group">
+                        <label>🧾 N° Boleta / Factura</label>
+                        <input type="text" id="cdNumeroBoleta" placeholder="Opcional">
+                    </div>
+
+                    <!-- Precio por litro -->
+                    <div class="form-group">
+                        <label>💵 Precio por Litro (CLP)</label>
+                        <input type="number" id="cdPrecio" step="1" min="100" max="3000" placeholder="Ej: 1150" inputmode="numeric">
+                        <p style="font-size:11px;color:#8e9aaf;margin-top:4px;">💡 Rango normal: $900 - $1.500 por litro</p>
+                    </div>
+
+                    <!-- Foto de boleta -->
+                    <div class="form-group">
+                        <label>📷 Foto de Boleta</label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <label for="cdFotoBoleta" class="btn btn-secondary" style="width:auto;padding:10px 16px;font-size:13px;cursor:pointer;margin:0;flex-shrink:0;">
+                                📷 Tomar Foto
+                            </label>
+                            <input type="file" id="cdFotoBoleta" accept="image/*" capture="environment" style="display:none;" onchange="previewFoto(this,'cdFotoPreview','cdFotoBoleta')">
+                            <span id="cdFotoStatus" style="font-size:12px;color:#8e9aaf;">Sin foto</span>
+                        </div>
+                        <div id="cdFotoPreview" style="display:none;margin-top:8px;position:relative;">
+                            <img id="cdFotoImg" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);">
+                            <button type="button" onclick="removeFoto()" style="position:absolute;top:4px;right:4px;background:rgba(244,67,54,0.9);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="form-group">
+                        <label>📝 Observaciones</label>
+                        <textarea id="cdObservaciones" placeholder="Opcional" style="min-height:50px;resize:vertical;"></textarea>
+                    </div>
+
+                    <div id="cdGpsStatus" style="text-align:center;font-size:12px;margin-bottom:8px;min-height:16px;"></div>
+                    <button type="submit" class="btn btn-primary" id="cdSubmitBtn">💾 Guardar Localmente</button>
+                </form>
+            </div>
+            <div class="app-version">v2.2.0 — H Roman · Israel Valenzuela Lavín</div>
+        </div>
+        <div class="bottom-nav">
+            <div class="nav-item active"><span>⛽</span>Carga</div>
+            <div class="nav-item" onclick="goToRegistros()"><span>📋</span>Historial</div>
+            <div class="nav-item" onclick="window.location.href='resumen.html'"><span>📊</span>Resumen</div>
+            <div class="nav-item" onclick="goToChecklist()"><span>✅</span>Checklist</div>
+            <div class="nav-item" onclick="showSyncModal(); fullSync();"><span>☁️</span>Sync</div>
+            <div class="nav-item" onclick="window.location.href='configuracion.html'"><span>⚙️</span>Config</div>
+            <div class="nav-item" onclick="logout()"><span>🚪</span>Salir</div>
+        </div>
+    </div>
+
+    <!-- MODAL VEHÍCULO DEL DÍA -->
+    <div class="vd-modal-overlay hidden" id="vdModal">
+        <div class="vd-modal">
+            <h3>🚗 Vehículo del día</h3>
+            <p>Selecciona el vehículo que usarás hoy</p>
+            <input type="text" class="vd-search" id="vdSearch" placeholder="Buscar patente..." autocomplete="off">
+            <div class="vd-list" id="vdList"></div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'https://www.constructorahroman.cl/crm/api';
+        const DB_NAME = 'SurtidorDB';
+        const DB_VERSION = 7;
+        const APP_VERSION = '2.2.0';
+        
+        let db = null;
+        let isOnline = navigator.onLine;
+        let lastMedicionValue = null;
+        let requestInProgress = false;
+        let lastRequestData = null;
+        let lastRequestTime = 0;
+
+        // ==================== MEDICIÓN DE SEÑAL ====================
+        let lastSignalCheck = { quality: 'unknown', latency: -1, effectiveType: '', downlink: 0 };
+
+        async function checkSignalQuality() {
+            if (!navigator.onLine) {
+                lastSignalCheck = { quality: 'offline', latency: -1, effectiveType: 'none', downlink: 0 };
+                updateSignalUI();
+                return lastSignalCheck;
+            }
+
+            // 1. Info de red del navegador (si disponible)
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            let effectiveType = conn ? (conn.effectiveType || '') : '';
+            let downlink = conn ? (conn.downlink || 0) : 0;
+
+            // 2. Test de latencia real al servidor
+            let latency = -1;
+            try {
+                const start = Date.now();
+                await fetch(`${API}/ping.php?t=${start}`, { method: 'HEAD', cache: 'no-store' });
+                latency = Date.now() - start;
+            } catch(e) {
+                // Si falla el fetch, puede ser CORS pero no significa sin conexión
+                try {
+                    const start2 = Date.now();
+                    const img = new Image();
+                    await new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = resolve; // incluso error cuenta como "llegó"
+                        setTimeout(reject, 8000);
+                        img.src = `${API}/ping.php?t=${Date.now()}`;
+                    });
+                    latency = Date.now() - start2;
+                } catch(e2) {
+                    latency = 9999;
+                }
+            }
+
+            // 3. Determinar calidad
+            let quality = 'good';
+            if (latency > 5000 || latency === 9999) {
+                quality = 'poor';
+            } else if (latency > 2000 || ['slow-2g', '2g'].includes(effectiveType) || (downlink > 0 && downlink < 0.3)) {
+                quality = 'poor';
+            } else if (latency > 1000 || effectiveType === '3g' || (downlink > 0 && downlink < 1)) {
+                quality = 'medium';
+            }
+
+            lastSignalCheck = { quality, latency, effectiveType, downlink };
+            updateSignalUI();
+            return lastSignalCheck;
+        }
+
+        function updateSignalUI() {
+            const el = document.getElementById('signalIndicator');
+            if (!el) return;
+
+            el.classList.remove('good', 'medium', 'poor', 'offline');
+
+            const s = lastSignalCheck;
+            if (s.quality === 'offline') {
+                el.className = 'signal-indicator offline';
+                el.textContent = '📶 Sin señal';
+                el.style.display = '';
+            } else if (s.quality === 'poor') {
+                el.className = 'signal-indicator poor';
+                el.textContent = `📶 Débil ${s.latency > 0 ? s.latency + 'ms' : ''}`;
+                el.style.display = '';
+            } else if (s.quality === 'medium') {
+                el.className = 'signal-indicator medium';
+                el.textContent = `📶 Regular ${s.latency}ms`;
+                el.style.display = '';
+            } else {
+                el.className = 'signal-indicator good';
+                el.textContent = `📶 ${s.latency}ms`;
+                // Auto-ocultar si es buena después de 3seg
+                el.style.display = '';
+                setTimeout(() => { if (lastSignalCheck.quality === 'good') el.style.display = 'none'; }, 3000);
+            }
+        }
+
+        // Verificar si la señal permite sync automático
+        async function canAutoSync() {
+            const signal = await checkSignalQuality();
+            return signal.quality === 'good' || signal.quality === 'medium';
+        }
+
+        // Chequeo periódico de señal (cada 30s si está online)
+        setInterval(() => {
+            if (navigator.onLine && state.user) checkSignalQuality();
+        }, 30000);
+
+        // ==================== GPS + PERMISOS + DETECCIÓN ====================
+        let lastGpsStatus = '';
+        let gpsPermissionGranted = false;
+        let gpsCheckInterval = null;
+
+        function updateGpsIndicator(status, detail) {
+            lastGpsStatus = status;
+            ['gpsStatus', 'cdGpsStatus'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (status === 'ok') {
+                    el.innerHTML = `📍 GPS OK (±${detail}m)`;
+                    el.style.color = '#4CAF50';
+                } else if (status === 'getting') {
+                    el.innerHTML = '📍 Obteniendo ubicación...';
+                    el.style.color = '#FF9800';
+                } else if (status === 'denied') {
+                    el.innerHTML = '📍 <b>Permiso GPS denegado</b> — <a href="#" onclick="solicitarPermisoGPS();return false;" style="color:#2196F3;">Activar</a>';
+                    el.style.color = '#f44336';
+                } else if (status === 'unavailable') {
+                    el.innerHTML = '📍 <b>GPS apagado</b> — Actívalo en Ajustes del teléfono';
+                    el.style.color = '#f44336';
+                } else if (status === 'timeout') {
+                    el.innerHTML = '📍 GPS sin respuesta (esperando señal...)';
+                    el.style.color = '#FF9800';
+                } else if (status === 'nosupport') {
+                    el.innerHTML = '📍 GPS no soportado en este dispositivo';
+                    el.style.color = '#607D8B';
+                } else {
+                    el.innerHTML = '';
+                }
+            });
+        }
+
+        // ---- Verificar y solicitar permisos de ubicación ----
+        async function checkGpsPermission() {
+            // 1) API de permisos del navegador (funciona en Cordova WebView)
+            if (navigator.permissions) {
+                try {
+                    const result = await navigator.permissions.query({ name: 'geolocation' });
+                    if (result.state === 'granted') {
+                        gpsPermissionGranted = true;
+                        return true;
+                    } else if (result.state === 'denied') {
+                        gpsPermissionGranted = false;
+                        updateGpsIndicator('denied');
+                        return false;
+                    }
+                    // 'prompt' = aún no decidió, se pedirá al usar getCurrentPosition
+                } catch(e) {}
+            }
+            // 2) Intentar obtener posición para que el sistema pida permiso
+            return new Promise(resolve => {
+                navigator.geolocation.getCurrentPosition(
+                    () => { gpsPermissionGranted = true; resolve(true); },
+                    err => {
+                        if (err.code === 1) { gpsPermissionGranted = false; updateGpsIndicator('denied'); resolve(false); }
+                        else { gpsPermissionGranted = true; resolve(true); } // GPS apagado pero permiso OK
+                    },
+                    { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
+                );
+            });
+        }
+
+        function solicitarPermisoGPS() {
+            // En Android, solicitar de nuevo fuerza el diálogo del sistema
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    gpsPermissionGranted = true;
+                    updateGpsIndicator('ok', Math.round(pos.coords.accuracy));
+                    // Reiniciar tracking si estaba detenido por permisos
+                    startLocationTracking();
+                },
+                err => {
+                    if (err.code === 1) {
+                        // Permiso denegado permanentemente → llevar a ajustes
+                        updateGpsIndicator('denied');
+                        if (confirm('El permiso de ubicación fue denegado.\n\n¿Abrir los ajustes de la app para activarlo manualmente?')) {
+                            // En Cordova Android, intentar abrir ajustes de la app
+                            if (window.cordova && cordova.plugins && cordova.plugins.diagnostic) {
+                                cordova.plugins.diagnostic.switchToSettings();
+                            } else if (navigator.app) {
+                                // Fallback: intent de ajustes
+                                navigator.app.loadUrl('app-settings:', { openExternal: true });
+                            }
+                        }
+                    } else if (err.code === 2) {
+                        updateGpsIndicator('unavailable');
+                        alert('El GPS del teléfono está apagado.\n\nActívalo en: Ajustes > Ubicación');
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        // ---- Monitoreo continuo del estado GPS ----
+        function startGpsMonitoring() {
+            if (gpsCheckInterval) clearInterval(gpsCheckInterval);
+            // Verificar cada 30s si el GPS sigue activo
+            gpsCheckInterval = setInterval(() => {
+                if (!state.user) return;
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        if (lastGpsStatus !== 'ok') {
+                            updateGpsIndicator('ok', Math.round(pos.coords.accuracy));
+                            // GPS se reactivó → reiniciar tracking
+                            if (!ubicacionWatchId) startLocationTracking();
+                        }
+                    },
+                    err => {
+                        if (err.code === 1 && lastGpsStatus !== 'denied') updateGpsIndicator('denied');
+                        else if (err.code === 2 && lastGpsStatus !== 'unavailable') updateGpsIndicator('unavailable');
+                    },
+                    { enableHighAccuracy: false, timeout: 8000, maximumAge: 10000 }
+                );
+            }, 30000);
+        }
+
+        function stopGpsMonitoring() {
+            if (gpsCheckInterval) { clearInterval(gpsCheckInterval); gpsCheckInterval = null; }
+        }
+
+        function getGPS(timeoutMs = 10000) {
+            return new Promise(resolve => {
+                if (!navigator.geolocation) {
+                    updateGpsIndicator('nosupport');
+                    return resolve(null);
+                }
+                updateGpsIndicator('getting');
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        gpsPermissionGranted = true;
+                        const gps = {
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude,
+                            accuracy: Math.round(pos.coords.accuracy),
+                            speed: pos.coords.speed !== null ? Math.round(pos.coords.speed * 3.6 * 10) / 10 : null
+                        };
+                        updateGpsIndicator('ok', gps.accuracy);
+                        resolve(gps);
+                    },
+                    err => {
+                        if (err.code === 1) { gpsPermissionGranted = false; updateGpsIndicator('denied'); }
+                        else if (err.code === 2) updateGpsIndicator('unavailable');
+                        else if (err.code === 3) updateGpsIndicator('timeout');
+                        else updateGpsIndicator('unavailable');
+                        resolve(null);
+                    },
+                    { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 120000 }
+                );
+            });
+        }
+
+        // ==================== UBICACIÓN PERSISTENTE (BACKGROUND) ====================
+        let ubicacionWatchId = null;
+        let ubicacionInterval = null;
+        let lastUbicacionSent = 0;
+        let bgModeEnabled = false;
+        const UBICACION_MIN_INTERVAL = 30000;   // mínimo 30s entre envíos
+        const UBICACION_FORCE_INTERVAL = 120000; // forzar cada 2 min
+
+        // ---- Background Mode: mantener JS corriendo con app minimizada ----
+        function enableBackgroundMode() {
+            if (bgModeEnabled) return;
+            if (window.cordova && cordova.plugins && cordova.plugins.backgroundMode) {
+                const bg = cordova.plugins.backgroundMode;
+                bg.setDefaults({
+                    title: 'App HRoman',
+                    text: 'Rastreo de ubicación activo',
+                    color: '1a1a2e',
+                    resume: true,
+                    hidden: false,
+                    silent: false
+                });
+                bg.enable();
+                bg.on('activate', function() {
+                    bg.disableWebViewOptimizations();
+                });
+                bgModeEnabled = true;
+            }
+        }
+
+        function disableBackgroundMode() {
+            if (window.cordova && cordova.plugins && cordova.plugins.backgroundMode) {
+                try { cordova.plugins.backgroundMode.disable(); } catch(e) {}
+                bgModeEnabled = false;
+            }
+        }
+
+        async function startLocationTracking() {
+            if (!state.user) return;
+            const idActivo = getTrackingActivoId();
+            if (!idActivo) return;
+
+            // Verificar permisos primero
+            const permiso = await checkGpsPermission();
+            if (!permiso) {
+                solicitarPermisoGPS();
+                return;
+            }
+
+            stopLocationTracking();
+
+            // Activar background mode
+            enableBackgroundMode();
+
+            // Iniciar monitoreo de estado GPS
+            startGpsMonitoring();
+
+            // 1) watchPosition: actualización automática al moverse
+            if (navigator.geolocation) {
+                ubicacionWatchId = navigator.geolocation.watchPosition(
+                    pos => {
+                        const now = Date.now();
+                        if (now - lastUbicacionSent < UBICACION_MIN_INTERVAL) return;
+                        const gps = {
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude,
+                            accuracy: Math.round(pos.coords.accuracy),
+                            speed: pos.coords.speed !== null ? Math.round(pos.coords.speed * 3.6 * 10) / 10 : null
+                        };
+                        updateGpsIndicator('ok', gps.accuracy);
+                        sendUbicacionData(gps);
+                    },
+                    err => {
+                        if (err.code === 1) updateGpsIndicator('denied');
+                        else if (err.code === 2) updateGpsIndicator('unavailable');
+                        else if (err.code === 3) updateGpsIndicator('timeout');
+                    },
+                    { enableHighAccuracy: true, maximumAge: 15000, timeout: 20000 }
+                );
+            }
+
+            // 2) Respaldo: forzar cada 2 min
+            sendUbicacion();
+            ubicacionInterval = setInterval(sendUbicacion, UBICACION_FORCE_INTERVAL);
+        }
+
+        function stopLocationTracking() {
+            if (ubicacionWatchId !== null && navigator.geolocation) {
+                navigator.geolocation.clearWatch(ubicacionWatchId);
+                ubicacionWatchId = null;
+            }
+            if (ubicacionInterval) {
+                clearInterval(ubicacionInterval);
+                ubicacionInterval = null;
+            }
+            stopGpsMonitoring();
+            disableBackgroundMode();
+        }
+
+        // ---- Obtener id_activo según tipo de usuario ----
+        function getTrackingActivoId() {
+            if (isSurtidor() && state.camion) return state.camion.id_activo;
+            const vd = getVehiculoDia();
+            return vd ? vd.id_activo : null;
+        }
+
+        // ---- Enviar datos GPS al servidor ----
+        async function sendUbicacionData(gps) {
+            if (!state.user || !navigator.onLine) return;
+            const idActivo = getTrackingActivoId();
+            if (!idActivo) return;
+
+            lastUbicacionSent = Date.now();
+            try {
+                await fetch(`${API}/update_ubicacion.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_activo: idActivo,
+                        id_usuario: state.user.id,
+                        latitud: gps.lat,
+                        longitud: gps.lng,
+                        accuracy: gps.accuracy,
+                        velocidad: gps.speed
+                    })
+                });
+            } catch(e) {}
+        }
+
+        // ---- Respaldo: obtener GPS manualmente y enviar ----
+        async function sendUbicacion() {
+            if (!state.user || !navigator.onLine) return;
+            const idActivo = getTrackingActivoId();
+            if (!idActivo) return;
+
+            const gps = await getGPS(15000);
+            if (!gps) return;
+            sendUbicacionData(gps);
+        }
+
+        // ==================== MEDICIÓN FRESCA ====================
+        // Consulta al servidor si hay señal, fallback a IndexedDB
+        async function getLastMedicion(idActivo) {
+            // 1. Intentar del servidor si hay conexión
+            if (navigator.onLine) {
+                try {
+                    const r = await fetch(`${API}/get_last_medicion.php?id_activo=${idActivo}`);
+                    const d = await r.json();
+                    if (d.success && d.tiene_medicion && d.last_value !== null) {
+                        // Actualizar cache local con dato fresco
+                        await dbPut('mediciones', {
+                            id_activo: idActivo,
+                            valor: d.last_value,
+                            tipo: d.medicion_tipo || 'kilometraje',
+                            fecha: d.fecha_registro || null,
+                            identificacion: d.activo?.identificacion || ''
+                        });
+                        return { valor: d.last_value, tipo: d.medicion_tipo, source: 'server' };
+                    } else if (d.success && !d.tiene_medicion) {
+                        return { valor: null, tipo: d.medicion_tipo || 'kilometraje', source: 'server' };
+                    }
+                } catch(e) {
+                }
+            }
+            // 2. Fallback a IndexedDB
+            const lm = await dbGet('mediciones', idActivo);
+            if (lm?.valor) {
+                return { valor: lm.valor, tipo: lm.tipo || 'kilometraje', source: 'cache' };
+            }
+            return { valor: null, tipo: 'kilometraje', source: 'none' };
+        }
+
+        // ==================== VEHÍCULO DEL DÍA ====================
+        function getVehiculoDia() {
+            try {
+                const raw = localStorage.getItem('vehiculo_dia');
+                if (!raw) return null;
+                const vd = JSON.parse(raw);
+                const hoy = new Date().toISOString().slice(0, 10);
+                if (vd.fecha !== hoy) return null; // expirado, es otro día
+                return vd;
+            } catch { return null; }
+        }
+
+        function setVehiculoDia(activo) {
+            const hoy = new Date().toISOString().slice(0, 10);
+            localStorage.setItem('vehiculo_dia', JSON.stringify({
+                fecha: hoy,
+                id_activo: activo.id_activo,
+                identificacion: activo.identificacion || activo.patente,
+                tipo: activo.tipo || '',
+                tipo_medicion: activo.tipo_medicion || 'kilometraje'
+            }));
+        }
+
+        async function applyVehiculoDia() {
+            const vd = getVehiculoDia();
+            const banner = document.getElementById('vehiculoDiaBanner');
+            const searchGroup = document.getElementById('cdActivoGroup');
+            const activoInfo = document.getElementById('cdActivoInfo');
+
+            if (!banner) return;
+
+            if (vd) {
+                // Mostrar banner con el vehículo
+                banner.style.display = 'flex';
+                document.getElementById('vdPatente').textContent = vd.identificacion;
+                document.getElementById('vdDetalle').textContent = `Vehículo de hoy • ${vd.tipo || 'Vehículo'}`;
+                // Pre-seleccionar en el formulario
+                state.cdActivo = { id_activo: vd.id_activo, identificacion: vd.identificacion, tipo_medicion: vd.tipo_medicion };
+                if (searchGroup) searchGroup.style.display = 'none';
+                if (activoInfo) {
+                    activoInfo.classList.remove('hidden');
+                    document.getElementById('cdActivoText').textContent = vd.identificacion + (vd.tipo ? ` (${vd.tipo})` : '');
+                }
+                // Obtener medición FRESCA (servidor si hay señal, cache si no)
+                const label = document.getElementById('cdMedicionLabel');
+                const input = document.getElementById('cdMedicion');
+                const lm = await getLastMedicion(vd.id_activo);
+                const esTipo = (lm.tipo || vd.tipo_medicion || '').toLowerCase();
+                const tipoLabel = esTipo === 'horometro' ? 'Horómetro' : 'Kilometraje';
+                const sourceIcon = lm.source === 'server' ? '🟢' : lm.source === 'cache' ? '🟡' : '';
+                if (lm.valor) {
+                    label.innerHTML = `✏️ ${tipoLabel} * <small style="color:#4CAF50">${sourceIcon} (Últ: ${Number(lm.valor).toLocaleString('es-CL')})</small>`;
+                    input.placeholder = `Mín: ${lm.valor}`;
+                    input.min = lm.valor;
+                } else {
+                    label.textContent = `✏️ ${tipoLabel} *`;
+                    input.placeholder = 'Ej: 45000';
+                    input.min = 0;
+                }
+                // Iniciar tracking de ubicación persistente
+                startLocationTracking();
+            } else {
+                // No hay vehículo del día — mostrar búsqueda normal
+                banner.style.display = 'none';
+                if (searchGroup) searchGroup.style.display = '';
+                stopLocationTracking();
+            }
+        }
+
+        async function showVehiculoDiaModal() {
+            const modal = document.getElementById('vdModal');
+            modal.classList.remove('hidden');
+            const searchInput = document.getElementById('vdSearch');
+            searchInput.value = '';
+            searchInput.focus();
+
+            // Si no hay activos en cache, intentar descargar del servidor
+            if ((!state.activos || !state.activos.length) && navigator.onLine) {
+                const list = document.getElementById('vdList');
+                list.innerHTML = '<p style="text-align:center;color:#8e9aaf;padding:20px;">Cargando activos...</p>';
+                try {
+                    const res = await fetch(`${API}/get_all_activos.php`);
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length) {
+                        state.activos = data;
+                        // Guardar en IndexedDB para offline
+                        if (db) {
+                            try {
+                                const tx = db.transaction('activos', 'readwrite');
+                                const store = tx.objectStore('activos');
+                                store.clear();
+                                data.forEach(a => store.put(a));
+                            } catch(e) {}
+                        }
+                    }
+                } catch(e) {
+                    console.warn('No se pudieron cargar activos:', e);
+                }
+            }
+
+            renderVdList('');
+            searchInput.oninput = () => renderVdList(searchInput.value);
+            modal.onclick = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
+        }
+
+        function renderVdList(query) {
+            const list = document.getElementById('vdList');
+            const q = query.toLowerCase().trim();
+            const filtered = (state.activos || []).filter(a => {
+                if (!q) return true;
+                return (a.identificacion || '').toLowerCase().includes(q) || (a.tipo || '').toLowerCase().includes(q);
+            }).slice(0, 30);
+
+            list.innerHTML = filtered.map(a => `
+                <div class="vd-item" onclick="selectVehiculoDia(${a.id_activo})">
+                    <strong>${a.identificacion || 'Sin ID'}</strong>
+                    <span>${a.tipo || 'Vehículo'} ${a.tipo_medicion ? '• ' + a.tipo_medicion : ''}</span>
+                </div>
+            `).join('') || '<p style="text-align:center;color:#8e9aaf;padding:20px;">Sin resultados</p>';
+        }
+
+        function selectVehiculoDia(idActivo) {
+            const activo = (state.activos || []).find(a => a.id_activo === idActivo);
+            if (!activo) return;
+            setVehiculoDia(activo);
+            document.getElementById('vdModal').classList.add('hidden');
+            applyVehiculoDia();
+            // Iniciar tracking de ubicación persistente
+            startLocationTracking();
+        }
+
+        let state = {
+            user: null, csrf: null, camion: null,
+            marcas: [], areas: [], activos: [], usuarios: [],
+            selectedActivoId: null, selectedUsuarioId: null, selectedActivoData: null,
+            selectedUsuarioData: null,
+            canDescarga: false, // Control de permiso para descarga
+            cdActivo: null      // Activo seleccionado para carga directa
+        };
+
+        // ==================== ANTI-DUPLICADOS ====================
+        
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function hashPayload(payload) {
+            const str = JSON.stringify({
+                id_activo: payload.id_activo,
+                tipo: payload.tipo_movimiento,
+                cantidad: payload.cantidad,
+                destino: payload.id_activo_destino,
+                timestamp: Math.floor(Date.now() / 60000)
+            });
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash = hash & hash;
+            }
+            return hash.toString(36);
+        }
+
+        function isDuplicateRequest(payload) {
+            const now = Date.now();
+            const timeDiff = now - lastRequestTime;
+            
+            if (timeDiff > 3000) return false;
+            if (!lastRequestData) return false;
+            
+            const isSame = 
+                lastRequestData.id_activo === payload.id_activo &&
+                lastRequestData.tipo_movimiento === payload.tipo_movimiento &&
+                Math.abs(lastRequestData.cantidad - payload.cantidad) < 0.01 &&
+                lastRequestData.id_activo_destino === payload.id_activo_destino;
+            
+            return isSame;
+        }
+
+        function saveLastRequest(payload) {
+            lastRequestData = {
+                id_activo: payload.id_activo,
+                tipo_movimiento: payload.tipo_movimiento,
+                cantidad: payload.cantidad,
+                id_activo_destino: payload.id_activo_destino || null
+            };
+            lastRequestTime = Date.now();
+        }
+
+        // ==================== INDEXED DB ====================
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    const oldVersion = e.oldVersion;
+
+                    // Instalación limpia (v0→v7): crear todos los stores
+                    if (oldVersion < 6) {
+                        ['session','marcas','areas','activos','usuarios','camiones','saldos','pendingSync','registros','mediciones'].forEach(name => {
+                            if (database.objectStoreNames.contains(name)) database.deleteObjectStore(name);
+                        });
+                        database.createObjectStore('session',   { keyPath: 'key' });
+                        database.createObjectStore('marcas',    { keyPath: 'id' });
+                        database.createObjectStore('areas',     { keyPath: 'id' });
+                        database.createObjectStore('activos',   { keyPath: 'id_activo' });
+                        database.createObjectStore('usuarios',  { keyPath: 'id' });
+                        database.createObjectStore('camiones',  { keyPath: 'id_activo' });
+                        database.createObjectStore('saldos',    { keyPath: 'id_activo' });
+                        const ps = database.createObjectStore('pendingSync', { keyPath: 'id', autoIncrement: true });
+                        ps.createIndex('timestamp', 'timestamp');
+                        const rs = database.createObjectStore('registros', { keyPath: 'id', autoIncrement: true });
+                        rs.createIndex('timestamp', 'timestamp');
+                        database.createObjectStore('mediciones', { keyPath: 'id_activo' });
+                    }
+
+                    // Migración v6→v7: solo agregar checklists (no borra datos existentes)
+                    if (oldVersion < 7) {
+                        if (!database.objectStoreNames.contains('checklists')) {
+                            const cs = database.createObjectStore('checklists', { keyPath: 'id', autoIncrement: true });
+                            cs.createIndex('timestamp', 'timestamp');
+                            cs.createIndex('id_activo', 'id_activo');
+                        }
+                    }
+                };
+            });
+        }
+
+        const dbPut = (store, data) => new Promise((res, rej) => {
+            const tx = db.transaction(store, 'readwrite');
+            const req = tx.objectStore(store).put(data);
+            req.onsuccess = () => res(req.result);
+            req.onerror = () => rej(req.error);
+        });
+
+        const dbGetAll = (store) => new Promise((res, rej) => {
+            const tx = db.transaction(store, 'readonly');
+            const req = tx.objectStore(store).getAll();
+            req.onsuccess = () => res(req.result || []);
+            req.onerror = () => rej(req.error);
+        });
+
+        const dbGet = (store, key) => new Promise((res, rej) => {
+            const tx = db.transaction(store, 'readonly');
+            const req = tx.objectStore(store).get(key);
+            req.onsuccess = () => res(req.result);
+            req.onerror = () => rej(req.error);
+        });
+
+        const dbDelete = (store, key) => new Promise((res, rej) => {
+            const tx = db.transaction(store, 'readwrite');
+            const req = tx.objectStore(store).delete(key);
+            req.onsuccess = () => res();
+            req.onerror = () => rej(req.error);
+        });
+
+        const dbClear = (store) => new Promise((res, rej) => {
+            const tx = db.transaction(store, 'readwrite');
+            const req = tx.objectStore(store).clear();
+            req.onsuccess = () => res();
+            req.onerror = () => rej(req.error);
+        });
+
+        const dbCount = (store) => new Promise((res, rej) => {
+            const tx = db.transaction(store, 'readonly');
+            const req = tx.objectStore(store).count();
+            req.onsuccess = () => res(req.result);
+            req.onerror = () => rej(req.error);
+        });
+
+        // ==================== SESIÓN PERMANENTE ====================
+        async function saveSession(user, csrf) {
+            await dbPut('session', { key: 'user', data: user });
+            await dbPut('session', { key: 'csrf', data: csrf });
+            localStorage.setItem('session', JSON.stringify({ user, csrf }));
+        }
+
+        async function loadSession() {
+            try {
+                const saved = localStorage.getItem('session');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    if (data.user && data.csrf) {
+                        // Determinar permisos al cargar sesión
+                        const userType = (data.user.tipo || '').toLowerCase().trim();
+                        state.canDescarga = (userType === 'surtidor' || userType === 'control combustible');
+                        return data;
+                    }
+                }
+                const u = await dbGet('session', 'user');
+                const c = await dbGet('session', 'csrf');
+                if (u?.data && c?.data) {
+                    // Determinar permisos al cargar sesión
+                    const userType = (u.data.tipo || '').toLowerCase().trim();
+                    state.canDescarga = (userType === 'surtidor' || userType === 'control combustible');
+                    return { user: u.data, csrf: c.data };
+                }
+            } catch (e) { }
+            return null;
+        }
+
+        async function saveCamion(camion) {
+            await dbPut('session', { key: 'camion', data: camion });
+            await dbPut('saldos', { id_activo: camion.id_activo, saldo: parseFloat(camion.saldo_actual || 0), capacidad: parseFloat(camion.capacidad_aljibe || 0) });
+            localStorage.setItem('camion', JSON.stringify(camion));
+        }
+
+        async function loadCamion() {
+            try {
+                const saved = localStorage.getItem('camion');
+                if (saved) return JSON.parse(saved);
+                const c = await dbGet('session', 'camion');
+                if (c?.data) return c.data;
+            } catch (e) {}
+            return null;
+        }
+
+        // ==================== PENDIENTES (SIEMPRE LOCAL) ====================
+        async function addPending(payload) {
+            const pending = await dbGetAll('pendingSync');
+            const hash = hashPayload(payload);
+            const now = Date.now();
+            
+            // Verificar duplicados locales (último minuto)
+            const duplicate = pending.find(p => {
+                const pHash = hashPayload(p.payload);
+                const timeDiff = now - p.timestamp;
+                return pHash === hash && timeDiff < 60000;
+            });
+            
+            if (duplicate) {
+                return duplicate.id;
+            }
+            
+            const id = await dbPut('pendingSync', {
+                payload,
+                timestamp: now,
+                errors: [],
+                hash: hash
+            });
+            
+            updatePendingBadge();
+            updateNavSyncBadge();
+            return id;
+        }
+
+        async function updatePendingBadge() {
+            const pending = await dbGetAll('pendingSync');
+            const badge = document.getElementById('pendingBadge');
+            if (pending.length > 0) {
+                badge.textContent = `⏳ ${pending.length} pendiente${pending.length > 1 ? 's' : ''}`;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // Actualizar indicador en botón Sync del nav
+        async function updateNavSyncBadge() {
+            const pending = await dbGetAll('pendingSync');
+            // Actualizar pending badge flotante
+            updatePendingBadge();
+            // Actualizar notice de sync según modo configurado
+            updateSyncNotice(pending.length);
+        }
+
+        function updateSubmitButton() {
+            const btn = document.getElementById('submitBtn');
+            if (!btn) return;
+            const mode = localStorage.getItem('syncMode') || 'auto';
+            btn.textContent = mode === 'auto' ? '⚡ Guardar y Sincronizar' : '💾 Guardar Localmente';
+        }
+
+        function updateSyncNotice(pendingCount) {
+            const mode = localStorage.getItem('syncMode') || 'auto';
+            ['syncNotice', 'cdSyncNotice'].forEach(id => {
+            const notice = document.getElementById(id);
+            if (!notice) return;
+            if (mode === 'auto') {
+                notice.style.background  = 'rgba(76,175,80,0.15)';
+                notice.style.borderColor = 'rgba(76,175,80,0.4)';
+                notice.style.color       = '#A5D6A7';
+                notice.innerHTML = '⚡ <strong>Auto-sync activado:</strong> Los registros se envían automáticamente al guardar.';
+            } else {
+                notice.style.background  = 'rgba(255,152,0,0.1)';
+                notice.style.borderColor = 'rgba(255,152,0,0.35)';
+                notice.style.color       = '#FFE0B2';
+                const syncLine = pendingCount > 0
+                    ? `🖐 <strong>Modo Manual</strong> — ${pendingCount} registro${pendingCount > 1 ? 's' : ''} pendiente${pendingCount > 1 ? 's' : ''} de enviar.`
+                    : '🖐 <strong>Modo Manual</strong> — Todo sincronizado ✅';
+                notice.innerHTML = `${syncLine} <span onclick="window.location.href='configuracion.html'" style="text-decoration:underline;cursor:pointer;color:#FFB74D;">Cambiar a automático en ⚙️ Config</span>`;
+            }
+            }); // fin forEach
+        }
+
+        // SYNC SOLO SE LLAMA MANUALMENTE
+        async function syncPending() {
+            if (!isOnline) {
+                showAlert('registroAlert', 'error', '❌ Sin conexión a internet');
+                return { synced: 0, failed: 0 };
+            }
+            
+            const pending = await dbGetAll('pendingSync');
+            if (!pending.length) return { synced: 0, failed: 0 };
+
+            let synced = 0, failed = 0;
+
+            for (const item of pending) {
+                try {
+                    const res = await fetch(`${API}/sync.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(item.payload)
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        await dbDelete('pendingSync', item.id);
+                        synced++;
+                    } else {
+                        item.errors = item.errors || [];
+                        item.errors.push(data.error || 'Error desconocido');
+                        await dbPut('pendingSync', item);
+                        failed++;
+                    }
+                } catch (e) {
+                    item.errors = item.errors || [];
+                    item.errors.push(e.message);
+                    await dbPut('pendingSync', item);
+                    failed++;
+                }
+            }
+
+            await updatePendingBadge();
+            await updateNavSyncBadge();
+            return { synced, failed };
+        }
+
+        async function refreshCamionSaldo() {
+            if (!state.camion || !isOnline) return;
+            try {
+                const res = await api(`get_camion_saldo.php?id_activo=${state.camion.id_activo}`);
+                const data = await res.json();
+                if (data.success && data.camion) {
+                    state.camion.saldo_actual = data.camion.saldo_actual;
+                    state.camion.capacidad_aljibe = data.camion.capacidad_aljibe;
+                    await saveCamion(state.camion);
+                    updateSaldoUI();
+                }
+            } catch (e) { }
+        }
+
+        // ==================== FULL SYNC (MANUAL) ====================
+        let syncLog = [];
+        
+        function logSync(msg, type = 'info') {
+            syncLog.push({ msg, type });
+            const logEl = document.getElementById('syncLog');
+            if (logEl) {
+                const cls = type === 'ok' ? 'ok' : type === 'err' ? 'err' : type === 'warn' ? 'warn' : '';
+                logEl.innerHTML += `<p class="${cls}">${msg}</p>`;
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+        }
+
+        function showSyncModal() {
+            syncLog = [];
+            document.getElementById('syncLog').innerHTML = '';
+            document.getElementById('syncModalStatus').textContent = 'Iniciando...';
+            document.getElementById('syncModal').classList.remove('hidden');
+        }
+
+        function closeSyncModal() {
+            document.getElementById('syncModal').classList.add('hidden');
+        }
+
+        async function fullSync() {
+            if (!isOnline) { 
+                showAlert('camionAlert', 'error', '❌ Sin conexión'); 
+                showAlert('registroAlert', 'error', '❌ Sin conexión a internet');
+                return; 
+            }
+            
+            showSyncModal();
+            showStatus('syncing', '☁️ Sincronizando...');
+            
+            try {
+                // 1. ENVIAR PENDIENTES (LO MÁS IMPORTANTE)
+                logSync('📤 Enviando registros pendientes...');
+                const pr = await syncPending();
+                if (pr.synced) logSync(`✓ ${pr.synced} registros enviados al servidor`, 'ok');
+                if (pr.failed) logSync(`✗ ${pr.failed} fallaron (revisar pendientes)`, 'err');
+                if (!pr.synced && !pr.failed) logSync('Sin registros pendientes', 'ok');
+                
+                // 2. Descargar datos de referencia
+                logSync('📥 Descargando estaciones...');
+                try {
+                    const r = await api('get_marcas.php');
+                    const d = await r.json();
+                    if (Array.isArray(d) && d.length) {
+                        await dbClear('marcas');
+                        for (const m of d) await dbPut('marcas', m);
+                        state.marcas = d;
+                        logSync(`✓ ${d.length} estaciones`, 'ok');
+                    } else logSync('0 estaciones', 'warn');
+                } catch (e) { logSync(`✗ ${e.message}`, 'err'); }
+                
+                logSync('📥 Descargando áreas...');
+                try {
+                    const r = await api('get_areas.php');
+                    const d = await r.json();
+                    if (Array.isArray(d) && d.length) {
+                        await dbClear('areas');
+                        for (const a of d) await dbPut('areas', a);
+                        state.areas = d;
+                        logSync(`✓ ${d.length} áreas`, 'ok');
+                    } else logSync('0 áreas', 'warn');
+                } catch (e) { logSync(`✗ ${e.message}`, 'err'); }
+                
+                logSync('📥 Descargando camiones surtidores...');
+                try {
+                    const r = await api('get_camion_saldo.php');
+                    const d = await r.json();
+                    let c = d.camiones || [];
+                    if (c.length) {
+                        await dbClear('camiones');
+                        for (const x of c) {
+                            await dbPut('camiones', x);
+                            await dbPut('saldos', { id_activo: x.id_activo, saldo: parseFloat(x.saldo_actual || 0), capacidad: parseFloat(x.capacidad_aljibe || 0) });
+                            if (state.camion && state.camion.id_activo === x.id_activo) {
+                                state.camion.saldo_actual = parseFloat(x.saldo_actual || 0);
+                                state.camion.capacidad_aljibe = parseFloat(x.capacidad_aljibe || 0);
+                                await saveCamion(state.camion);
+                            }
+                        }
+                        logSync(`✓ ${c.length} camiones con saldo actualizado`, 'ok');
+                    } else {
+                        const r2 = await api('list_camiones.php');
+                        const d2 = await r2.json();
+                        c = Array.isArray(d2) ? d2 : (d2.camiones || []);
+                        c = c.filter(x => x.tipo === 'camion surtidor combustible');
+                        if (c.length) {
+                            await dbClear('camiones');
+                            for (const x of c) {
+                                await dbPut('camiones', x);
+                                await dbPut('saldos', { id_activo: x.id_activo, saldo: parseFloat(x.saldo_actual || 0), capacidad: parseFloat(x.capacidad_aljibe || 0) });
+                            }
+                            logSync(`✓ ${c.length} camiones`, 'ok');
+                        } else logSync('0 camiones', 'warn');
+                    }
+                } catch (e) { logSync(`✗ Camiones: ${e.message}`, 'err'); }
+                
+                logSync('📥 Descargando activos...');
+                document.getElementById('syncModalStatus').textContent = 'Descargando activos...';
+                try {
+                    const r = await api('get_all_activos.php');
+                    const txt = await r.text();
+                    let d = [];
+                    try { d = JSON.parse(txt); } catch (e) { 
+                        logSync(`✗ JSON inválido`, 'err');
+                        throw e;
+                    }
+                    
+                    if (d.error) {
+                        logSync(`✗ ${d.error}`, 'err');
+                    } else if (Array.isArray(d) && d.length) {
+                        await dbClear('activos');
+                        for (const a of d) await dbPut('activos', a);
+                        state.activos = d;
+                        logSync(`✓ ${d.length} activos`, 'ok');
+                    } else {
+                        logSync('0 activos', 'warn');
+                    }
+                } catch (e) { logSync(`✗ Activos: ${e.message}`, 'err'); }
+                
+                logSync('📥 Descargando usuarios...');
+                document.getElementById('syncModalStatus').textContent = 'Descargando usuarios...';
+                try {
+                    const r = await api('get_all_usuarios.php');
+                    const txt = await r.text();
+                    let d = [];
+                    try { d = JSON.parse(txt); } catch (e) { 
+                        logSync(`✗ JSON inválido`, 'err');
+                        throw e;
+                    }
+                    
+                    if (d.error) {
+                        logSync(`✗ ${d.error}`, 'err');
+                    } else if (Array.isArray(d) && d.length) {
+                        await dbClear('usuarios');
+                        for (const u of d) await dbPut('usuarios', u);
+                        state.usuarios = d;
+                        logSync(`✓ ${d.length} usuarios`, 'ok');
+                    } else {
+                        logSync('⚠️ 0 usuarios', 'warn');
+                    }
+                } catch (e) { logSync(`✗ Usuarios: ${e.message}`, 'err'); }
+                
+                logSync('📥 Descargando mediciones...');
+                document.getElementById('syncModalStatus').textContent = 'Descargando mediciones...';
+                try {
+                    const r = await api('get_all_mediciones.php');
+                    const txt = await r.text();
+                    let d = [];
+                    try { d = JSON.parse(txt); } catch (e) { 
+                        logSync(`✗ JSON inválido`, 'err');
+                        throw e;
+                    }
+                    
+                    if (d.error) {
+                        logSync(`✗ ${d.error}`, 'err');
+                    } else if (Array.isArray(d) && d.length) {
+                        await dbClear('mediciones');
+                        for (const m of d) {
+                            await dbPut('mediciones', { 
+                                id_activo: parseInt(m.id_activo), 
+                                valor: parseFloat(m.valor || 0), 
+                                tipo: m.tipo || 'km',
+                                fecha: m.fecha || null,
+                                identificacion: m.identificacion || ''
+                            });
+                        }
+                        logSync(`✓ ${d.length} mediciones`, 'ok');
+                    } else {
+                        logSync('0 mediciones', 'warn');
+                    }
+                } catch (e) { logSync(`✗ Mediciones: ${e.message}`, 'err'); }
+                
+                populateSelect('marca', state.marcas, 'id', m => m.nombre + (m.ubicacion ? ` - ${m.ubicacion}` : ''));
+                populateSelect('area', state.areas, 'id', 'nombre');
+                await updateSyncStats();
+
+                // Solo cargar pantalla de camiones si es surtidor y NO tiene camión seleccionado
+                if (isSurtidor()) {
+                    if (state.camion) {
+                        updateSaldoUI();
+                    } else {
+                        await loadCamiones();
+                    }
+                }
+                
+                document.getElementById('syncModalStatus').textContent = '✅ Sincronización completada';
+                logSync('────────────────', 'ok');
+                logSync('✅ Sync finalizado correctamente', 'ok');
+                showStatus('manual', '🔄 Sync Manual - Datos actualizados');
+                
+            } catch (e) {
+                document.getElementById('syncModalStatus').textContent = '❌ Error';
+                logSync(`Error general: ${e.message}`, 'err');
+                showStatus('manual', '🔄 Sync Manual');
+            }
+        }
+
+        async function updateSyncStats() {
+            try {
+                const a = await dbCount('activos');
+                const u = await dbCount('usuarios');
+                const m = await dbCount('mediciones');
+                const c = await dbCount('camiones');
+                const p = await dbCount('pendingSync');
+                
+                document.getElementById('syncStats').innerHTML = 
+                    `${c} camiones, ${a} activos, ${u} usuarios, ${m} mediciones` +
+                    (p > 0 ? ` <strong style="color:#FF9800">| ${p} pendientes de enviar</strong>` : ' <span style="color:#4CAF50">| Todo sincronizado ✓</span>');
+                
+                const w = document.getElementById('syncWarning');
+                if (a < 10) w.classList.remove('hidden');
+                else w.classList.add('hidden');
+            } catch (e) {}
+        }
+
+        // ==================== MODAL PENDIENTES ====================
+        async function showPendingModal() {
+            const pending = await dbGetAll('pendingSync');
+            const container = document.getElementById('pendingList');
+            
+            if (!pending.length) {
+                container.innerHTML = '<p style="text-align:center;color:#8e9aaf;">✅ Sin registros pendientes<br><small>Todos los datos han sido sincronizados</small></p>';
+            } else {
+                const activos = await dbGetAll('activos');
+                const mediciones = await dbGetAll('mediciones');
+                const am = {};
+                const mm = {};
+                activos.forEach(a => am[a.id_activo] = a);
+                mediciones.forEach(m => mm[m.id_activo] = m);
+                
+                container.innerHTML = pending.map(item => {
+                    const p = item.payload;
+                    const fecha = new Date(item.timestamp).toLocaleString('es-CL');
+                    const hasErr = item.errors?.length > 0;
+                    
+                    const activo = p.id_activo_destino ? am[p.id_activo_destino] : null;
+                    const activoName = activo ? activo.identificacion : (p._activo_nombre || `ID:${p.id_activo_destino}`);
+                    const tipoMed = activo?.tipo_medicion === 'horometro' ? 'Horómetro' : 'Km';
+                    
+                    const medicion = p.id_activo_destino ? mm[p.id_activo_destino] : null;
+                    const ultimaMedicion = medicion ? medicion.valor : null;
+                    
+                    const medicionActual = p.medicion_valor;
+                    const medicionInvalida = ultimaMedicion !== null && medicionActual < ultimaMedicion;
+                    
+                    return `
+                        <div class="pending-item ${hasErr ? 'error' : ''}">
+                            <h4>${p.tipo_movimiento === 'carga' ? '⬆️ Carga' : '⬇️ Descarga'} - ${p.cantidad} L</h4>
+                            <p>📅 ${fecha}</p>
+                            ${activoName ? `<p>🚗 ${activoName}</p>` : ''}
+                            ${p.precio_combustible ? `<p>💵 $${p.precio_combustible.toLocaleString('es-CL')}/L</p>` : ''}
+                            ${hasErr ? `<p class="error-text">⚠️ ${item.errors[item.errors.length-1]}</p>` : ''}
+                            ${p.medicion_valor !== undefined && p.medicion_valor !== null ? `
+                                <div class="form-group" style="margin:10px 0 5px;">
+                                    <label style="font-size:12px;">📏 ${tipoMed}:</label>
+                                    <input type="number" id="med-${item.id}" value="${medicionActual}"
+                                           style="padding:8px;" step="0.01" min="0"
+                                           onchange="validatePendingMedicion(${item.id}, ${ultimaMedicion || 0})">
+                                </div>
+                                ${ultimaMedicion !== null ? `
+                                    <div class="medicion-suggestion">
+                                        💡 Última medición: <strong>${Number(ultimaMedicion).toLocaleString('es-CL')}</strong>
+                                    </div>
+                                ` : ''}
+                                ${medicionInvalida ? `
+                                    <div class="medicion-warning">
+                                        ⚠️ Valor menor a última medición (puede ser por sync offline)
+                                    </div>
+                                ` : ''}
+                            ` : ''}
+                            <div class="pending-actions">
+                                <button class="btn btn-sm btn-primary" onclick="savePending(${item.id})">💾 Guardar</button>
+                                <button class="btn btn-sm btn-danger" onclick="deletePending(${item.id})">🗑️ Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            document.getElementById('pendingModal').classList.remove('hidden');
+        }
+
+        function validatePendingMedicion(id, minValue) {
+            const input = document.getElementById(`med-${id}`);
+            if (input && parseFloat(input.value) < minValue) {
+                input.style.borderColor = '#f44336';
+            } else if (input) {
+                input.style.borderColor = 'rgba(255,255,255,0.2)';
+            }
+        }
+
+        function closePendingModal() { document.getElementById('pendingModal').classList.add('hidden'); }
+
+        async function savePending(id) {
+            const item = await dbGet('pendingSync', id);
+            if (!item) return;
+            const input = document.getElementById(`med-${id}`);
+            if (input) {
+                const nv = parseFloat(input.value);
+                item.payload.medicion_valor = nv;
+                item.errors = [];
+                await dbPut('pendingSync', item);
+                
+                if (item.payload.id_activo_destino) {
+                    const existingMed = await dbGet('mediciones', item.payload.id_activo_destino);
+                    await dbPut('mediciones', {
+                        ...existingMed,
+                        id_activo: item.payload.id_activo_destino,
+                        valor: nv,
+                        fecha: new Date().toISOString()
+                    });
+                }
+                
+                showAlert('registroAlert', 'success', '✅ Medición actualizada');
+                showPendingModal();
+            }
+        }
+
+        async function deletePending(id) {
+            if (!confirm('¿Eliminar este registro pendiente?\n\nEsta acción no se puede deshacer.')) return;
+            await dbDelete('pendingSync', id);
+            await updatePendingBadge();
+            await updateNavSyncBadge();
+            await updateSyncStats();
+            showPendingModal();
+        }
+
+        async function forceSyncAll() {
+            if (!isOnline) { 
+                alert('Sin conexión a internet.\n\nConéctate a una red para sincronizar.'); 
+                return; 
+            }
+            closePendingModal();
+            
+            showStatus('syncing', '🔄 Enviando registros al servidor...');
+            const r = await syncPending();
+            
+            if (r.failed) {
+                showAlert('registroAlert', 'warning', `⚠️ ${r.synced} enviados, ${r.failed} con errores. Revisa los pendientes.`);
+                showPendingModal();
+            } else if (r.synced) {
+                showAlert('registroAlert', 'success', `✅ ${r.synced} registros sincronizados exitosamente`);
+                if (state.camion) await refreshCamionSaldo();
+            } else {
+                showAlert('registroAlert', 'info', 'Sin pendientes para sincronizar');
+            }
+            
+            showStatus('manual', '🔄 Sync Manual');
+            await updateSyncStats();
+        }
+
+        // ==================== STATUS ====================
+        function showStatus(type, msg) {
+            const bar = document.getElementById('statusBar');
+            bar.className = `status-bar ${type}`;
+            bar.textContent = msg;
+            bar.classList.add('show');
+            
+            // Solo ocultar automáticamente si es online/syncing exitoso
+            if (type === 'syncing') {
+                // Mantener visible durante sync
+            } else if (type === 'manual') {
+                // Mantener siempre visible en modo manual
+            }
+        }
+
+        async function updateOnlineStatus() {
+            isOnline = navigator.onLine;
+            if (isOnline) {
+                showStatus('manual', '🔄 Verificando señal...');
+                const signal = await checkSignalQuality();
+                const mode = localStorage.getItem('syncMode') || 'auto';
+
+                if (signal.quality === 'poor') {
+                    showStatus('weak-signal', `📶 Señal débil (${signal.latency}ms) — datos se guardan localmente`);
+                } else if (mode === 'auto') {
+                    // Señal OK + modo auto → intentar enviar pendientes
+                    const pendCount = await dbCount('pendingSync');
+                    if (pendCount > 0) {
+                        showStatus('syncing', `⚡ Señal OK — enviando ${pendCount} pendiente${pendCount > 1 ? 's' : ''}...`);
+                        try {
+                            const sr = await syncPending();
+                            if (sr.synced > 0) showStatus('online', `✅ ${sr.synced} registro${sr.synced > 1 ? 's' : ''} sincronizado${sr.synced > 1 ? 's' : ''}`);
+                            else showStatus('online', '✅ Conectado — sin pendientes');
+                        } catch(e) {
+                            showStatus('manual', '🔄 Conectado — sync pendiente');
+                        }
+                    } else {
+                        showStatus('online', `✅ Conectado (${signal.latency}ms)`);
+                    }
+                    setTimeout(() => {
+                        const bar = document.getElementById('statusBar');
+                        if (bar && bar.classList.contains('online')) bar.style.transform = 'translateY(-100%)';
+                    }, 3000);
+                } else {
+                    showStatus('manual', '🔄 Sync Manual - Conexión disponible');
+                }
+            } else {
+                lastSignalCheck = { quality: 'offline', latency: -1, effectiveType: 'none', downlink: 0 };
+                updateSignalUI();
+                showStatus('offline', '📴 Sin conexión - Registros se guardan localmente');
+            }
+        }
+
+        // ==================== API ====================
+        async function api(endpoint, options = {}) {
+            const url = endpoint.startsWith('http') ? endpoint : `${API}/${endpoint}`;
+            const config = { method: options.method || 'GET' };
+            if (options.body) {
+                config.headers = { 'Content-Type': 'application/json' };
+                config.body = JSON.stringify(options.body);
+            }
+            return fetch(url, config);
+        }
+
+        // ==================== INIT ====================
+        // ── SPLASH ───────────────────────────────────────────────────────
+        function splash(pct, txt) {
+            const b = document.getElementById('spBar');
+            const t = document.getElementById('spTxt');
+            if (b) b.style.width = pct + '%';
+            if (t) t.textContent = txt;
+        }
+        function hideSplash() {
+            setTimeout(() => {
+                const s = document.getElementById('splashScreen');
+                if (s) s.classList.add('fade-out');
+            }, 320);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+          try {
+            splash(10, 'Verificando actualizaciones…');
+
+            // Detectar cambio de versión → limpiar TODOS los cachés y recargar
+            const prevVersion = localStorage.getItem('app_version');
+            if (prevVersion && prevVersion !== APP_VERSION) {
+                splash(15, `Actualizando ${prevVersion} → ${APP_VERSION}…`);
+
+                // 1. Limpiar Cache API (Service Worker)
+                if ('caches' in window) {
+                    try {
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map(k => caches.delete(k)));
+                    } catch(e) {}
+                }
+                // 2. Desregistrar Service Workers viejos
+                if ('serviceWorker' in navigator) {
+                    try {
+                        const regs = await navigator.serviceWorker.getRegistrations();
+                        await Promise.all(regs.map(r => r.unregister()));
+                    } catch(e) {}
+                }
+                // 3. Guardar nueva versión y recargar
+                localStorage.setItem('app_version', APP_VERSION);
+                window.location.reload(true);
+                return;
+            }
+            if (!prevVersion) localStorage.setItem('app_version', APP_VERSION);
+
+            if ('serviceWorker' in navigator) {
+                try {
+                    const reg = await navigator.serviceWorker.register('service-worker.js');
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'activated') {
+                                if (confirm('🔄 Nueva versión de App HRoman disponible. ¿Actualizar ahora?')) {
+                                    window.location.reload();
+                                }
+                            }
+                        });
+                    });
+                    reg.update();
+                } catch (e) {}
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                });
+            }
+
+            splash(25, 'Abriendo base de datos…');
+            await initDB();
+
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+            // Escuchar cambios en tipo de conexión (ej: WiFi→4G→3G)
+            const netConn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (netConn) netConn.addEventListener('change', updateOnlineStatus);
+            updateOnlineStatus();
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') updateSubmitButton();
+            });
+
+            splash(50, 'Cargando datos locales…');
+            await loadLocalData();
+            await updatePendingBadge();
+            await updateNavSyncBadge();
+            await updateSyncStats();
+
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('registroForm').addEventListener('submit', handleRegistro);
+            document.getElementById('tipoMovimiento').addEventListener('change', toggleCampos);
+            document.getElementById('rut').addEventListener('input', e => formatRUT(e.target));
+            document.getElementById('medicionValor').addEventListener('input', validateMedicion);
+
+            ['pendingModal', 'syncModal'].forEach(id => {
+                document.getElementById(id).addEventListener('click', e => {
+                    if (e.target.id === id) document.getElementById(id).classList.add('hidden');
+                });
+            });
+
+            setupSearch('activoSearch', 'activoSearchResults', searchActivos, selectActivo);
+            setupSearch('usuarioSearch', 'usuarioSearchResults', searchUsuarios, selectUsuario);
+            setupSearch('cdActivoSearch', 'cdActivoResults', searchActivos, selectActivoCD);
+            document.getElementById('cdForm').addEventListener('submit', handleCargaDirecta);
+
+            window.addEventListener('beforeunload', async (e) => {
+                const p = await dbGetAll('pendingSync');
+                if (p.length) {
+                    e.preventDefault();
+                    e.returnValue = `Tienes ${p.length} registros sin sincronizar.\n\n¿Seguro que quieres salir?`;
+                }
+            });
+
+            splash(80, 'Verificando sesión…');
+            checkSession();
+          } catch(err) {
+            // Si algo falla en la inicialización, al menos mostrar login
+            hideSplash();
+            showScreen('loginScreen');
+          }
+        });
+
+        async function loadLocalData() {
+            try {
+                state.marcas = await dbGetAll('marcas');
+                state.areas = await dbGetAll('areas');
+                state.activos = await dbGetAll('activos');
+                state.usuarios = await dbGetAll('usuarios');
+                
+                if (state.marcas.length) populateSelect('marca', state.marcas, 'id', m => m.nombre + (m.ubicacion ? ` - ${m.ubicacion}` : ''));
+                if (state.areas.length) populateSelect('area', state.areas, 'id', 'nombre');
+            } catch (e) {}
+        }
+
+        async function checkSession() {
+            const s = await loadSession();
+            if (s && s.user) {
+                state.user = s.user;
+                state.csrf = s.csrf;
+                state.camion = await loadCamion();
+                splash(100, '¡Listo!');
+                hideSplash();
+                loadApp();
+            } else {
+                splash(100, 'Bienvenido');
+                hideSplash();
+                showScreen('loginScreen');
+            }
+        }
+
+        // ==================== LOGIN ====================
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const rut = document.getElementById('rut').value.replace(/[^0-9kK]/g, '');
+            const clave = document.getElementById('clave').value;
+
+            if (rut.length < 8) { showAlert('loginAlert', 'error', '❌ RUT inválido'); return; }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>';
+
+            try {
+                const res = await api('login.php', { method: 'POST', body: { rut, clave } });
+                const data = await res.json();
+
+                if (data.success) {
+                    state.user = data.user;
+                    state.csrf = data.csrf_token;
+
+                    // Determinar permisos de descarga
+                    const userType = (data.user.tipo || '').toLowerCase().trim();
+                    state.canDescarga = (userType === 'surtidor' || userType === 'control combustible');
+
+                    await saveSession(data.user, data.csrf_token);
+                    showAlert('loginAlert', 'success', '✅ OK');
+                    setTimeout(() => loadApp(), 500);
+                } else throw new Error(data.error || 'Error');
+            } catch (e) {
+                showAlert('loginAlert', 'error', '❌ ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 Iniciar Sesión';
+            }
+        }
+
+        // ==================== APP ====================
+        function isSurtidor() {
+            const tipo = (state.user?.tipo || '').toLowerCase().trim();
+            return tipo === 'surtidor';
+        }
+
+        function loadApp() {
+            updateUserInfo();
+            // Verificar permisos GPS al entrar a la app
+            checkGpsPermission().then(ok => {
+                if (!ok) solicitarPermisoGPS();
+            });
+            if (isSurtidor()) {
+                state.camion ? showRegistro() : loadCamiones();
+            } else {
+                showCargaDirecta();
+            }
+        }
+
+        // ── Carga directa (usuarios no-surtidor) ──
+        async function showCargaDirecta() {
+            showScreen('cargaDirectaScreen');
+            if (state.user) {
+                document.getElementById('cdUserName').textContent = `👤 ${state.user.nombre} ${state.user.apellido}`;
+                document.getElementById('cdUserRole').textContent = `${state.user.tipo || 'Usuario'} • ${state.user.rut || ''}`;
+            }
+
+            // Si no hay datos en cache, descargar del servidor
+            if (navigator.onLine) {
+                if (!state.marcas || !state.marcas.length) {
+                    try {
+                        const r = await api('get_marcas.php');
+                        const d = await r.json();
+                        if (Array.isArray(d) && d.length) {
+                            state.marcas = d;
+                            if (db) { try { const tx = db.transaction('marcas','readwrite'); const s = tx.objectStore('marcas'); s.clear(); d.forEach(m => s.put(m)); } catch(e){} }
+                        }
+                    } catch(e) {}
+                }
+                if (!state.areas || !state.areas.length) {
+                    try {
+                        const r = await api('get_areas.php');
+                        const d = await r.json();
+                        if (Array.isArray(d) && d.length) {
+                            state.areas = d;
+                            if (db) { try { const tx = db.transaction('areas','readwrite'); const s = tx.objectStore('areas'); s.clear(); d.forEach(a => s.put(a)); } catch(e){} }
+                        }
+                    } catch(e) {}
+                }
+                if (!state.activos || !state.activos.length) {
+                    try {
+                        const r = await api('get_all_activos.php');
+                        const d = await r.json();
+                        if (Array.isArray(d) && d.length) {
+                            state.activos = d;
+                            if (db) { try { const tx = db.transaction('activos','readwrite'); const s = tx.objectStore('activos'); s.clear(); d.forEach(a => s.put(a)); } catch(e){} }
+                        }
+                    } catch(e) {}
+                }
+            }
+
+            // Poblar select de marcas (estaciones de servicio)
+            const selMarca = document.getElementById('cdMarca');
+            selMarca.innerHTML = '<option value="">— Seleccionar —</option>';
+            (state.marcas || []).forEach(m => {
+                const o = document.createElement('option');
+                o.value = m.id;
+                o.textContent = m.nombre + (m.ubicacion ? ` — ${m.ubicacion}` : '');
+                selMarca.appendChild(o);
+            });
+
+            // Poblar select de áreas
+            const selArea = document.getElementById('cdArea');
+            selArea.innerHTML = '<option value="">— Seleccionar —</option>';
+            (state.areas || []).forEach(a => {
+                const o = document.createElement('option');
+                o.value = a.id;
+                o.textContent = a.nombre || a.descripcion || `Área ${a.id}`;
+                selArea.appendChild(o);
+            });
+
+            updateCDSyncNotice();
+            updateCDSubmitButton();
+            clearAlert('cdAlert');
+
+            // Vehículo del día
+            applyVehiculoDia();
+            if (!getVehiculoDia()) {
+                // Primer uso del día: mostrar modal para elegir vehículo
+                setTimeout(() => showVehiculoDiaModal(), 300);
+            }
+
+            // Test GPS al abrir formulario
+            getGPS();
+        }
+
+        function updateCDSyncNotice() {
+            const mode   = localStorage.getItem('syncMode') || 'auto';
+            const notice = document.getElementById('cdSyncNotice');
+            if (!notice) return;
+            if (mode === 'auto') {
+                notice.style.background = 'rgba(76,175,80,0.15)';
+                notice.style.borderColor = 'rgba(76,175,80,0.4)';
+                notice.style.color = '#A5D6A7';
+                notice.innerHTML = '⚡ <strong>Auto-sync activado:</strong> Los registros se envían automáticamente al guardar.';
+            } else {
+                notice.style.background = '';
+                notice.style.borderColor = '';
+                notice.style.color = '';
+                notice.innerHTML = '💾 Los registros se guardan localmente. Ve a <strong>⚙️ Config</strong> para sincronizar.';
+            }
+        }
+
+        function updateCDSubmitButton() {
+            const btn = document.getElementById('cdSubmitBtn');
+            if (!btn) return;
+            const mode = localStorage.getItem('syncMode') || 'auto';
+            btn.textContent = mode === 'auto' ? '⚡ Guardar y Sincronizar' : '💾 Guardar Localmente';
+        }
+
+        // ==================== FOTO DE BOLETA ====================
+        // Mapa de fotos: { 'cd': base64, 'surt': base64 }
+        let fotosBase64 = { cd: null, surt: null };
+
+        function previewFoto(input, previewId, inputId) {
+            const file = input.files[0];
+            if (!file) return;
+            // Determinar cuál foto es (cd = carga directa, surt = surtidor)
+            const key = inputId === 'fotoBoleta' ? 'surt' : 'cd';
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX = 1024;
+                    let w = img.width, h = img.height;
+                    if (w > MAX || h > MAX) {
+                        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+                        else { w = Math.round(w * MAX / h); h = MAX; }
+                    }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    const base64 = canvas.toDataURL('image/jpeg', 0.7);
+                    fotosBase64[key] = base64;
+
+                    // Actualizar preview
+                    const previewEl = document.getElementById(previewId);
+                    const imgEl = previewEl.querySelector('img');
+                    if (imgEl) imgEl.src = base64;
+                    previewEl.classList.remove('hidden');
+                    previewEl.style.display = 'block';
+
+                    // Actualizar botón
+                    const btn = document.getElementById(inputId + 'Btn') || document.getElementById(inputId.replace('Foto','foto') + 'Btn');
+                    if (btn) btn.classList.add('has-foto');
+
+                    // Status text si existe
+                    const status = document.getElementById(inputId.replace('Foto','foto').replace('foto','Foto') + 'Status') || document.getElementById(inputId.replace('fotoBoleta','cdFoto').replace('Foto','') + 'Status');
+                    const kb = Math.round(base64.length * 0.75 / 1024);
+                    if (status) status.textContent = `${file.name} (${kb} KB)`;
+                    // Para carga directa legacy
+                    const cdStatus = document.getElementById('cdFotoStatus');
+                    if (key === 'cd' && cdStatus) cdStatus.textContent = `${file.name} (${kb} KB)`;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeFoto(inputId, previewId, btnId) {
+            if (!inputId) {
+                // Legacy call desde carga directa
+                inputId = 'cdFotoBoleta'; previewId = 'cdFotoPreview'; btnId = 'cdFotoBoletaBtn';
+                fotosBase64.cd = null;
+            } else {
+                const key = inputId === 'fotoBoleta' ? 'surt' : 'cd';
+                fotosBase64[key] = null;
+            }
+            const inp = document.getElementById(inputId);
+            if (inp) inp.value = '';
+            const prev = document.getElementById(previewId);
+            if (prev) { prev.style.display = 'none'; prev.classList.add('hidden'); }
+            const btn = document.getElementById(btnId);
+            if (btn) btn.classList.remove('has-foto');
+            const cdStatus = document.getElementById('cdFotoStatus');
+            if (cdStatus) cdStatus.textContent = 'Sin foto';
+        }
+
+        async function handleCargaDirecta(e) {
+            e.preventDefault();
+
+            if (!state.cdActivo) {
+                showAlert('cdAlert', 'error', '❌ Selecciona un vehículo o activo primero');
+                return;
+            }
+
+            const cantidad = parseFloat(document.getElementById('cdCantidad').value);
+            if (!cantidad || isNaN(cantidad) || cantidad <= 0) {
+                showAlert('cdAlert', 'error', '❌ Ingresa una cantidad válida (litros)');
+                return;
+            }
+
+            const medicion = parseFloat(document.getElementById('cdMedicion').value);
+            if (!medicion || isNaN(medicion) || medicion <= 0) {
+                showAlert('cdAlert', 'error', '❌ Ingresa el km / horómetro actual');
+                return;
+            }
+
+            const marcaVal = document.getElementById('cdMarca').value;
+            if (!marcaVal) {
+                showAlert('cdAlert', 'error', '❌ Selecciona la estación de servicio');
+                return;
+            }
+
+            const areaVal = document.getElementById('cdArea').value;
+            if (!areaVal) {
+                showAlert('cdAlert', 'error', '❌ Selecciona el área');
+                return;
+            }
+
+            const precio = parseFloat(document.getElementById('cdPrecio').value) || null;
+            if (precio !== null && (precio < 100 || precio > 3000)) {
+                showAlert('cdAlert', 'error', '❌ Precio fuera de rango ($100 - $3.000)');
+                return;
+            }
+
+            const btn = document.getElementById('cdSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Guardando...';
+
+            const requestId = generateUUID();
+            const gps = await getGPS();
+            const payload = {
+                action:            'create',
+                client_request_id: requestId,
+                tipo_movimiento:   'carga',
+                es_carga_directa:  1,
+                id_activo:          state.cdActivo.id_activo,
+                id_activo_destino:  state.cdActivo.id_activo,   // patente destino = mismo vehículo
+                _activo_nombre:     state.cdActivo.identificacion,
+                cantidad,
+                medicion_valor:    medicion,
+                marca:             parseInt(marcaVal),
+                fuente_tipo:       'estacion',
+                id_area:           parseInt(areaVal),
+                tipo_combustible:  document.getElementById('cdTipoCombustible').value,
+                numero_boleta:     document.getElementById('cdNumeroBoleta').value || null,
+                precio_combustible: precio,
+                observaciones:     document.getElementById('cdObservaciones').value || null,
+                id_usuario:        state.user.id,
+                latitud:           gps?.lat || null,
+                longitud:          gps?.lng || null,
+                foto_boleta:       fotosBase64.cd || null
+            };
+
+            try {
+                await addPending(payload);
+
+                // Actualizar última medición local para este activo
+                if (state.cdActivo && medicion) {
+                    await dbPut('mediciones', {
+                        id_activo: state.cdActivo.id_activo,
+                        valor: medicion,
+                        tipo: (state.cdActivo.tipo_medicion || 'kilometraje'),
+                        fecha: new Date().toISOString(),
+                        identificacion: state.cdActivo.identificacion || ''
+                    });
+                }
+
+                const pendingCount = await dbCount('pendingSync');
+
+                const syncMode   = localStorage.getItem('syncMode') || 'auto';
+                const onlineNow  = navigator.onLine;
+
+                if (syncMode === 'auto' && onlineNow) {
+                    const signalOk = await canAutoSync();
+                    if (signalOk) {
+                        showAlert('cdAlert', 'info', '⚡ Guardado — sincronizando automáticamente...');
+                        try {
+                            const sr = await syncPending();
+                            if (sr.synced > 0) showAlert('cdAlert', 'success', '✅ Carga guardada y sincronizada correctamente.');
+                            else if (sr.failed > 0) showAlert('cdAlert', 'warning', '💾 Guardado localmente — sync falló. Reintenta desde ⚙️ Config.');
+                        } catch(ex) {
+                            showAlert('cdAlert', 'warning', '💾 Guardado localmente — sin conexión.');
+                        }
+                    } else {
+                        showAlert('cdAlert', 'warning', `📶 Señal débil — guardado localmente (${pendingCount} pendiente${pendingCount !== 1 ? 's' : ''}). Se enviará cuando mejore la señal.`);
+                    }
+                } else {
+                    showAlert('cdAlert', 'success', `💾 Carga guardada (${pendingCount} pendiente${pendingCount !== 1 ? 's' : ''}). Sincroniza desde ⚙️ Config.`);
+                }
+
+                // Limpiar formulario
+                document.getElementById('cdCantidad').value      = '';
+                document.getElementById('cdMedicion').value      = '';
+                document.getElementById('cdMarca').value         = '';
+                document.getElementById('cdArea').value          = '';
+                document.getElementById('cdNumeroBoleta').value  = '';
+                document.getElementById('cdPrecio').value        = '';
+                document.getElementById('cdObservaciones').value = '';
+                removeFoto(); // limpiar foto de boleta
+                // Solo limpiar vehículo si NO hay vehículo del día
+                if (!getVehiculoDia()) {
+                    document.getElementById('cdActivoSearch').value  = '';
+                    document.getElementById('cdActivoInfo').classList.add('hidden');
+                    document.getElementById('cdMedicionLabel').textContent = '📏 Km / Horómetro *';
+                }
+                state.cdActivo = null;
+
+                await updateNavSyncBadge();
+
+            } catch(ex) {
+                showAlert('cdAlert', 'error', '❌ Error al guardar: ' + (ex.message || ex));
+            } finally {
+                btn.disabled = false;
+                updateCDSubmitButton();
+            }
+        }
+
+        function updateUserInfo() {
+            if (state.user) {
+                document.getElementById('userName').textContent = `👤 ${state.user.nombre} ${state.user.apellido}`;
+                document.getElementById('userRole').textContent = `${state.user.tipo} • ${state.user.rut}`;
+            }
+        }
+
+        async function loadCamiones() {
+            showScreen('camionScreen');
+            await updateSyncStats();
+            
+            try {
+                let camiones = [];
+                
+                camiones = await dbGetAll('camiones');
+                
+                for (const c of camiones) {
+                    const s = await dbGet('saldos', c.id_activo);
+                    if (s) {
+                        c.saldo_actual = s.saldo;
+                        c.capacidad_aljibe = s.capacidad || c.capacidad_aljibe;
+                    }
+                }
+                
+                if (!camiones.length && isOnline) {
+                    try {
+                        const res = await api('get_camion_saldo.php');
+                        const data = await res.json();
+                        if (data.camiones && data.camiones.length) {
+                            camiones = data.camiones;
+                            for (const c of camiones) {
+                                await dbPut('camiones', c);
+                                await dbPut('saldos', { id_activo: c.id_activo, saldo: parseFloat(c.saldo_actual || 0), capacidad: parseFloat(c.capacidad_aljibe || 0) });
+                            }
+                        }
+                    } catch (e) { }
+                }
+                
+                if (!camiones.length) {
+                    document.getElementById('camionList').innerHTML = '<p style="text-align:center;color:#8e9aaf;padding:30px;">Sin camiones surtidores<br><small>Usa ☁️ Sync para descargar datos</small></p>';
+                } else {
+                    document.getElementById('camionList').innerHTML = camiones.map(c => `
+                        <div class="camion-item" onclick="selectCamion(${c.id_activo})">
+                            <h3>🚛 ${c.identificacion}</h3>
+                            <p>${Number(c.saldo_actual || 0).toLocaleString('es-CL')} / ${Number(c.capacidad_aljibe || 0).toLocaleString('es-CL')} L</p>
+                        </div>
+                    `).join('');
+                }
+                clearAlert('camionAlert');
+            } catch (e) {
+                showAlert('camionAlert', 'error', '❌ ' + e.message);
+            }
+        }
+
+        async function selectCamion(id) {
+            try {
+                const c = await dbGet('camiones', id);
+                if (c) {
+                    const s = await dbGet('saldos', id);
+                    if (s) {
+                        c.saldo_actual = s.saldo;
+                        c.capacidad_aljibe = s.capacidad || c.capacidad_aljibe;
+                    }
+                    state.camion = c;
+                    await saveCamion(c);
+                }
+                
+                showRegistro();
+            } catch (e) {
+                showAlert('camionAlert', 'error', '❌ ' + e.message);
+            }
+        }
+
+        function showRegistro() {
+            if (!state.camion) return loadCamiones();
+            showScreen('registroScreen');
+            updateSaldoUI();
+            resetForm();
+            clearAlert('registroAlert');
+            updateNavSyncBadge();
+            updateSubmitButton();
+            updatePermisosUI();
+            startSurtidorTracking();
+            // Test GPS al abrir formulario
+            getGPS();
+        }
+
+        // Surtidor tracking ahora usa el sistema unificado de background
+        function startSurtidorTracking() {
+            startLocationTracking();
+        }
+
+        function updatePermisosUI() {
+            const opcionDescarga = document.getElementById('opcionDescarga');
+            const tipoMovimiento = document.getElementById('tipoMovimiento');
+
+            if (!state.canDescarga) {
+                // Ocultar opción de descarga para usuarios sin permiso
+                if (opcionDescarga) opcionDescarga.style.display = 'none';
+
+                // Si estaba seleccionada descarga, resetear a vacío
+                if (tipoMovimiento && tipoMovimiento.value === 'descarga') {
+                    tipoMovimiento.value = '';
+                    toggleCampos();
+                }
+            } else {
+                // Mostrar opción de descarga para surtidor y control combustible
+                if (opcionDescarga) opcionDescarga.style.display = '';
+            }
+        }
+
+        function updateSaldoUI() {
+            const c = state.camion;
+            if (!c) return;
+            document.getElementById('camionSeleccionado').textContent = `🚛 ${c.identificacion}`;
+            const saldo = parseFloat(c.saldo_actual || 0);
+            const cap = parseFloat(c.capacidad_aljibe || 0);
+            document.getElementById('saldoActual').textContent = saldo.toLocaleString('es-CL');
+            document.getElementById('capacidadTotal').textContent = cap.toLocaleString('es-CL');
+            document.getElementById('progressFill').style.width = Math.min(100, cap > 0 ? (saldo / cap) * 100 : 0) + '%';
+        }
+
+        function toggleCampos() {
+            const tipo = document.getElementById('tipoMovimiento').value;
+            document.getElementById('camposCarga').classList.toggle('hidden', tipo !== 'carga');
+            document.getElementById('camposDescarga').classList.toggle('hidden', tipo !== 'descarga');
+            if (tipo === 'carga') {
+                state.selectedActivoId = null;
+                state.selectedUsuarioId = null;
+                state.selectedActivoData = null;
+                state.selectedUsuarioData = null;
+            }
+            clearMedicionError();
+        }
+
+        // ==================== VALIDACIÓN MEDICIÓN ====================
+        function validateMedicion() {
+            const input = document.getElementById('medicionValor');
+            const v = parseFloat(input.value);
+            const err = document.getElementById('medicionError');
+            
+            if (lastMedicionValue !== null && v < lastMedicionValue) {
+                input.classList.add('error');
+                err.textContent = `⚠️ Debe ser >= ${lastMedicionValue.toLocaleString('es-CL')}`;
+                err.classList.remove('hidden');
+                return false;
+            }
+            clearMedicionError();
+            return true;
+        }
+
+        function clearMedicionError() {
+            document.getElementById('medicionValor').classList.remove('error');
+            document.getElementById('medicionError').classList.add('hidden');
+        }
+
+        // ==================== BÚSQUEDAS ====================
+        function setupSearch(inputId, resultsId, searchFn, selectFn) {
+            const input = document.getElementById(inputId);
+            const results = document.getElementById(resultsId);
+            let timer;
+            input.addEventListener('input', () => {
+                clearTimeout(timer);
+                const q = input.value.trim();
+                if (q.length < 2) { results.classList.add('hidden'); return; }
+                timer = setTimeout(() => searchFn(q, results, selectFn), 300);
+            });
+            document.addEventListener('click', e => { if (!e.target.closest('.search-container')) results.classList.add('hidden'); });
+        }
+
+        async function searchActivos(q, container, selectFn) {
+            const ql = q.toLowerCase();
+            const all = await dbGetAll('activos');
+            let data = all.filter(a => a.identificacion?.toLowerCase().includes(ql)).slice(0, 20);
+            
+            if (!data.length && !all.length) {
+                container.innerHTML = '<div class="search-result-item" style="color:#FF9800;">⚠️ Sin activos. Usa ☁️ Sync</div>';
+                container.classList.remove('hidden');
+                return;
+            }
+            
+            renderResults(container, data, i => {
+                const t = i.tipo ? i.tipo.replace(/_/g, ' ') : '';
+                return `<strong>${i.identificacion}</strong><br><small>${t} ${i.marca || ''}</small>`;
+            }, selectFn);
+        }
+
+        async function searchUsuarios(q, container, selectFn) {
+            const ql = q.toLowerCase();
+            const qClean = q.replace(/[.\-]/g, '');
+            
+            let all = await dbGetAll('usuarios');
+            
+            let data = all.filter(u => {
+                const matchName = (u.nombre?.toLowerCase().includes(ql)) || 
+                                 (u.apellido?.toLowerCase().includes(ql));
+                
+                const rutClean = (u.rut || '').replace(/[.\-]/g, '');
+                const matchRut = rutClean.includes(qClean) || (u.rut?.includes(q));
+                
+                return matchName || matchRut;
+            }).slice(0, 20);
+            
+            if (!data.length && !all.length) {
+                container.innerHTML = '<div class="search-result-item" style="color:#FF9800;">⚠️ Sin usuarios. Usa ☁️ Sync</div>';
+                container.classList.remove('hidden');
+                return;
+            }
+            
+            if (!data.length) {
+                container.innerHTML = '<div class="search-result-item">No encontrado</div>';
+                container.classList.remove('hidden');
+                return;
+            }
+            
+            renderResults(container, data, i => `<strong>${i.nombre} ${i.apellido}</strong><br><small>${i.rut}</small>`, selectFn);
+        }
+
+        function renderResults(container, items, render, selectFn) {
+            container.classList.remove('hidden');
+            if (!items?.length) { container.innerHTML = '<div class="search-result-item">No encontrado</div>'; return; }
+            container.innerHTML = items.map((item, i) => `<div class="search-result-item" data-idx="${i}">${render(item)}</div>`).join('');
+            container.querySelectorAll('.search-result-item').forEach((el, i) => {
+                if (items[i]) el.onclick = () => selectFn(items[i], container);
+            });
+        }
+
+        async function selectActivo(item, container) {
+            state.selectedActivoId = item.id_activo;
+            state.selectedActivoData = item;
+            document.getElementById('activoSearch').value = item.identificacion;
+            document.getElementById('selectedActivoText').textContent = `${item.identificacion} (${item.tipo || 'Activo'})`;
+            document.getElementById('selectedActivoInfo').classList.remove('hidden');
+            container.classList.add('hidden');
+            
+            lastMedicionValue = null;
+
+            // Obtener medición FRESCA (servidor si hay señal, cache si no)
+            const lm = await getLastMedicion(item.id_activo);
+            const tipoMed = (lm.tipo || item.tipo_medicion || '') === 'horometro' ? 'Horómetro' : 'Kilómetros';
+            if (lm.valor) lastMedicionValue = lm.valor;
+            const sourceIcon = lm.source === 'server' ? '🟢' : lm.source === 'cache' ? '🟡' : '';
+
+            const label = document.getElementById('medicionLabel');
+            const input = document.getElementById('medicionValor');
+            if (lastMedicionValue !== null) {
+                label.innerHTML = `📏 ${tipoMed} * <small style="color:#4CAF50">${sourceIcon} (Últ: ${lastMedicionValue.toLocaleString('es-CL')})</small>`;
+                input.placeholder = `Mín: ${lastMedicionValue}`;
+            } else {
+                label.textContent = `📏 ${tipoMed} *`;
+                input.placeholder = 'Ej: 15000';
+            }
+            clearMedicionError();
+        }
+
+        function selectUsuario(item, container) {
+            state.selectedUsuarioId = item.id;
+            state.selectedUsuarioData = item;
+            document.getElementById('usuarioSearch').value = `${item.nombre} ${item.apellido}`;
+            document.getElementById('selectedUsuarioText').textContent = `${item.nombre} ${item.apellido} (${item.rut})`;
+            document.getElementById('selectedUsuarioInfo').classList.remove('hidden');
+            container.classList.add('hidden');
+        }
+
+        // Selección de activo para carga directa
+        async function selectActivoCD(item, container) {
+            state.cdActivo = item;
+            document.getElementById('cdActivoSearch').value = item.identificacion;
+            document.getElementById('cdActivoText').textContent = `${item.identificacion}${item.tipo ? ' · ' + item.tipo : ''}`;
+            document.getElementById('cdActivoInfo').classList.remove('hidden');
+            if (container) container.classList.add('hidden');
+
+            // Sugerir última medición FRESCA (servidor si hay señal, cache si no)
+            const label    = document.getElementById('cdMedicionLabel');
+            const input    = document.getElementById('cdMedicion');
+            const lm       = await getLastMedicion(item.id_activo);
+            const esTipo   = (lm.tipo || item.tipo_medicion || '').toLowerCase();
+            const tipoLabel = esTipo === 'horometro' ? 'Horómetro' : 'Kilometraje';
+            const sourceIcon = lm.source === 'server' ? '🟢' : lm.source === 'cache' ? '🟡' : '';
+            if (lm.valor) {
+                label.innerHTML = `✏️ ${tipoLabel} * <small style="color:#4CAF50">${sourceIcon} (Últ: ${Number(lm.valor).toLocaleString('es-CL')})</small>`;
+                input.placeholder = `Mín: ${lm.valor}`;
+                input.min = lm.valor;
+            } else {
+                label.textContent = `✏️ ${tipoLabel} *`;
+                input.placeholder = 'Ej: 45000';
+                input.min = 0;
+            }
+        }
+
+        // ==================== REGISTRO (SIEMPRE LOCAL) ====================
+        async function handleRegistro(e) {
+            e.preventDefault();
+            
+            if (requestInProgress) {
+                return;
+            }
+            
+            const tipo = document.getElementById('tipoMovimiento').value;
+            const cantidad = parseFloat(document.getElementById('cantidad').value);
+            
+            if (!tipo || !cantidad || isNaN(cantidad)) { 
+                showAlert('registroAlert', 'error', '❌ Completa tipo y cantidad'); 
+                return; 
+            }
+            
+            const tempPayload = {
+                id_activo: state.camion.id_activo,
+                tipo_movimiento: tipo,
+                cantidad,
+                id_activo_destino: tipo === 'descarga' ? state.selectedActivoId : null
+            };
+            
+            if (isDuplicateRequest(tempPayload)) {
+                showAlert('registroAlert', 'warning', '⏳ Registro ya guardado...');
+                return;
+            }
+            
+            // Validaciones DESCARGA
+            if (tipo === 'descarga') {
+                if (!state.selectedActivoId) { 
+                    showAlert('registroAlert', 'error', '❌ Selecciona activo'); 
+                    return; 
+                }
+                if (!state.selectedUsuarioId) { 
+                    showAlert('registroAlert', 'error', '❌ Selecciona operador'); 
+                    return; 
+                }
+                if (!document.getElementById('area').value) { 
+                    showAlert('registroAlert', 'error', '❌ Selecciona área'); 
+                    return; 
+                }
+                
+                const medicionInput = document.getElementById('medicionValor');
+                if (!medicionInput.value || medicionInput.value.trim() === '') { 
+                    showAlert('registroAlert', 'error', '❌ Ingresa medición'); 
+                    return; 
+                }
+                
+                if (!validateMedicion()) { 
+                    showAlert('registroAlert', 'error', '❌ Medición inválida'); 
+                    return; 
+                }
+                
+                const tipoActivo = (state.selectedActivoData?.tipo || '').toLowerCase();
+                
+                if (tipoActivo.includes('estanque')) {
+                    showAlert('registroAlert', 'error', '🚫 No se puede cargar a un estanque desde esta app.');
+                    return;
+                }
+                
+                if (tipoActivo.includes('camion surtidor') || tipoActivo.includes('camión surtidor')) {
+                    if (cantidad > 300) {
+                        showAlert('registroAlert', 'error', '🚫 Máximo 300L para traspaso entre surtidores.');
+                        return;
+                    }
+                    const confirmar = confirm(
+                        '⚠️ TRASPASO A CAMIÓN SURTIDOR\n\n' +
+                        '• NO se sumará al stock del destino\n' +
+                        '• Solo para movilización\n\n' +
+                        '¿Continuar?'
+                    );
+                    if (!confirmar) return;
+                }
+            }
+            
+            // Validaciones CARGA
+            if (tipo === 'carga') {
+                const marcaSelect = document.getElementById('marca');
+                if (!marcaSelect.value || marcaSelect.value === '') {
+                    showAlert('registroAlert', 'error', '❌ Selecciona estación'); 
+                    return;
+                }
+                
+                const precioInput = document.getElementById('precioCombustible');
+                if (!precioInput.value || precioInput.value.trim() === '') {
+                    showAlert('registroAlert', 'error', '❌ Ingresa precio del combustible'); 
+                    return;
+                }
+                
+                const precio = parseFloat(precioInput.value);
+                
+                if (isNaN(precio) || precio <= 0) {
+                    showAlert('registroAlert', 'error', '❌ Precio inválido'); 
+                    return;
+                }
+                
+                if (precio < 100 || precio > 3000) {
+                    showAlert('registroAlert', 'error', '❌ Precio fuera de rango ($100 - $3.000)'); 
+                    return;
+                }
+                
+                if (precio < 700 || precio > 1800) {
+                    if (!confirm(`⚠️ Precio inusual: $${precio.toLocaleString('es-CL')}\n\n¿Confirmar?`)) return;
+                }
+            }
+            
+            const saldo = parseFloat(state.camion.saldo_actual || 0);
+            if (tipo === 'descarga' && cantidad > saldo) {
+                showAlert('registroAlert', 'error', `❌ Saldo insuficiente (${saldo.toFixed(0)} L)`); 
+                return;
+            }
+            
+            requestInProgress = true;
+            
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Guardando...';
+            
+            const requestId = generateUUID();
+            const gps = await getGPS();
+
+            const payload = {
+                action: 'create',
+                client_request_id: requestId,
+                id_activo: state.camion.id_activo,
+                tipo_movimiento: tipo,
+                cantidad,
+                tipo_combustible: 'petroleo',
+                observaciones: document.getElementById('observaciones').value || null,
+                id_usuario: state.user.id,
+                latitud:  gps?.lat || null,
+                longitud: gps?.lng || null
+            };
+            
+            if (tipo === 'carga') {
+                payload.marca = parseInt(document.getElementById('marca').value);
+                payload.numero_boleta = document.getElementById('numeroBoleta').value || null;
+                payload.precio_combustible = parseFloat(document.getElementById('precioCombustible').value);
+                if (fotosBase64.surt) payload.foto_boleta = fotosBase64.surt;
+            } else {
+                payload.id_activo_destino = state.selectedActivoId;
+                payload.id_area = parseInt(document.getElementById('area').value);
+                payload.medicion_valor = parseFloat(document.getElementById('medicionValor').value);
+                payload.id_usuario_destino = state.selectedUsuarioId;
+                payload._activo_nombre = state.selectedActivoData?.identificacion || '';
+                payload._usuario_nombre = state.selectedUsuarioData ? `${state.selectedUsuarioData.nombre} ${state.selectedUsuarioData.apellido}` : '';
+                
+                const tipoActivo = (state.selectedActivoData?.tipo || '').toLowerCase();
+                if (tipoActivo.includes('camion surtidor') || tipoActivo.includes('camión surtidor')) {
+                    payload.es_traspaso_surtidor = true;
+                    payload.observaciones = (payload.observaciones ? payload.observaciones + ' | ' : '') + 
+                                           'TRASPASO ENTRE SURTIDORES';
+                }
+            }
+            
+            saveLastRequest(payload);
+            
+            try {
+                // SIEMPRE GUARDAR LOCALMENTE
+                await addPending(payload);
+                
+                // Actualizar saldo local
+                state.camion.saldo_actual = saldo + (tipo === 'carga' ? cantidad : -cantidad);
+                await saveCamion(state.camion);
+                
+                // Guardar medición local si es descarga
+                if (tipo === 'descarga' && payload.medicion_valor) {
+                    await dbPut('mediciones', { 
+                        id_activo: state.selectedActivoId, 
+                        valor: payload.medicion_valor, 
+                        tipo: state.selectedActivoData?.tipo_medicion || 'kilometraje', 
+                        fecha: new Date().toISOString() 
+                    });
+                }
+                
+                const pendingCount = await dbCount('pendingSync');
+
+                // Auto-sync si está configurado y hay conexión con buena señal
+                const syncMode = localStorage.getItem('syncMode') || 'auto';
+                if (syncMode === 'auto' && isOnline) {
+                    const signalOk = await canAutoSync();
+                    if (signalOk) {
+                        showAlert('registroAlert', 'info', '⚡ Guardado — sincronizando automáticamente...');
+                        try {
+                            const sr = await syncPending();
+                            if (sr.synced > 0) {
+                                showAlert('registroAlert', 'success', `✅ Guardado y sincronizado correctamente.`);
+                            } else if (sr.failed > 0) {
+                                showAlert('registroAlert', 'warning', `💾 Guardado localmente — sync falló, reintenta desde ⚙️ Config.`);
+                            }
+                        } catch(e) {
+                            showAlert('registroAlert', 'warning', `💾 Guardado localmente — sin conexión al servidor.`);
+                        }
+                    } else {
+                        showAlert('registroAlert', 'warning', `📶 Señal débil — guardado localmente (${pendingCount} pendiente${pendingCount > 1 ? 's' : ''}). Se enviará cuando mejore la señal.`);
+                    }
+                } else {
+                    showAlert('registroAlert', 'success', `💾 Guardado localmente (${pendingCount} pendiente${pendingCount > 1 ? 's' : ''}). Sincroniza desde ⚙️ Config.`);
+                }
+
+                resetForm();
+                await updateSyncStats();
+                await updateNavSyncBadge();
+                
+            } catch (e) {
+                console.error('Error guardando:', e);
+                showAlert('registroAlert', 'error', '❌ ' + e.message);
+            } finally {
+                setTimeout(() => {
+                    requestInProgress = false;
+                    btn.disabled = false;
+                    btn.textContent = '💾 Guardar Localmente';
+                }, 1500);
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('registroForm').reset();
+            document.getElementById('selectedActivoInfo').classList.add('hidden');
+            document.getElementById('selectedUsuarioInfo').classList.add('hidden');
+            document.getElementById('medicionLabel').textContent = '📏 Km/Horómetro *';
+            document.getElementById('medicionValor').placeholder = 'Ej: 15000';
+            
+            const precioInput = document.getElementById('precioCombustible');
+            if (precioInput) precioInput.value = '';
+            
+            state.selectedActivoId = null;
+            state.selectedUsuarioId = null;
+            state.selectedActivoData = null;
+            state.selectedUsuarioData = null;
+            lastMedicionValue = null;
+            clearMedicionError();
+            removeFoto('fotoBoleta','fotoBoletaPreview','fotoBoletaBtn');
+            toggleCampos();
+            updateSaldoUI();
+        }
+
+        // ==================== UTILS ====================
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function showAlert(id, type, msg) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+                if (type === 'success') setTimeout(() => clearAlert(id), 6000);
+            }
+        }
+
+        function clearAlert(id) { const el = document.getElementById(id); if (el) el.innerHTML = ''; }
+
+        function populateSelect(id, items, valueKey, labelFn) {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            sel.innerHTML = '<option value="">Selecciona...</option>';
+            (items || []).forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item[valueKey];
+                opt.textContent = typeof labelFn === 'function' ? labelFn(item) : item[labelFn];
+                sel.appendChild(opt);
+            });
+        }
+
+        function formatRUT(input) {
+            let v = input.value.replace(/[^0-9kK]/g, '');
+            if (v.length < 2) return;
+            input.value = v.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + v.slice(-1).toUpperCase();
+        }
+
+        function volverCamiones() { 
+            state.camion = null; 
+            localStorage.removeItem('camion'); 
+            loadCamiones(); 
+        }
+        
+        function goToRegistros() { window.location.href = 'registros.html'; }
+
+        function goToChecklist() { window.location.href = 'checklist.html'; }
+
+        async function logout() {
+            const p = await dbGetAll('pendingSync');
+            if (p.length) {
+                if (!confirm(`⚠️ Tienes ${p.length} registros SIN SINCRONIZAR.\n\nSi sales ahora se perderán.\n\n¿Salir de todas formas?`)) return;
+            } else if (!confirm('¿Cerrar sesión?')) return;
+
+            stopLocationTracking();
+            localStorage.clear();
+            try { 
+                await dbClear('session'); 
+            } catch (e) {}
+            
+            state = { 
+                user: null, csrf: null, camion: null, 
+                marcas: [], areas: [], activos: [], usuarios: [], 
+                selectedActivoId: null, selectedUsuarioId: null, selectedActivoData: null 
+            };
+            
+            document.getElementById('rut').value = '';
+            document.getElementById('clave').value = '';
+            clearAlert('loginAlert');
+            
+            showScreen('loginScreen');
+        }
+    </script>
+</body>
+</html>

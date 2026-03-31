@@ -1,0 +1,23 @@
+# Dependencias
+node_modules/
+plugins/
+platforms/
+
+# Build outputs
+*.apk
+*.ipa
+*.aab
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/
+
+# Logs
+*.log
